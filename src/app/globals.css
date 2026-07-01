@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/*
+  RST AERO SYSTEMS — дизайн-система
+  Минимализм по референсу: светлая тема, воздух, крупные скругления,
+  графитовые кнопки, один свежий акцент (electric lime) для бейджей/акцентов.
+*/
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f0f11;
+
+  --surface: #f6f6f5;        /* мягкий фон карточек/секций */
+  --surface-2: #efeeec;      /* второй уровень поверхности */
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --border: #ececec;
+  --input: #e6e6e6;
+  --ring: #0f0f11;
+
+  --primary: #121215;        /* графит — кнопки, как «Add to card» */
+  --primary-foreground: #ffffff;
+
+  --accent: #c9f24d;         /* electric lime — FPV-энергия, точечно */
+  --accent-foreground: #14210a;
+
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+
+  --success: #2f9e44;
+
+  --radius: 1.25rem;         /* базовое крупное скругление */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-sm: calc(var(--radius) - 0.5rem);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.5rem);
+  --radius-2xl: calc(var(--radius) + 1rem);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Скрыть скроллбар для горизонтальных «таблеток» категорий */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Плавные фокус-стили для доступности */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

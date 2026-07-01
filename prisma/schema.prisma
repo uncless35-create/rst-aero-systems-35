@@ -1,0 +1,150 @@
+// RST AERO SYSTEMS — модель данных.
+// Схема переносимая: локально dev на SQLite, в проде — PostgreSQL (Supabase).
+// Статусы и JSON хранятся строками, чтобы работать на обоих провайдерах.
+// При переходе на Supabase: сменить provider на "postgresql" и DATABASE_URL/DIRECT_URL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Пользователи: покупатели (CUSTOMER) и администратор (ADMIN).
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String   @default("CUSTOMER") // "CUSTOMER" | "ADMIN"
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  sortOrder   Int       @default(0)
+  isVisible   Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  sku             String?          @unique
+  description     String?
+  priceKopecks    Int
+  oldPriceKopecks Int?
+  stockQty        Int              @default(0)
+  isActive        Boolean          @default(true)
+  isFeatured      Boolean          @default(false) // показывать в «Хиты» на главной
+  badge           String? // напр. «Хит продаж», «Новинка»
+  variantLabel    String? // напр. «Цвет» / «Частота»; если задан — есть варианты
+  attributes      String? // JSON-строка: [{"name":"Вес","value":"32 г"}]
+  categoryId      String
+  category        Category         @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  variants        ProductVariant[]
+  orderItems      OrderItem[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([categoryId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id           String      @id @default(cuid())
+  productId    String
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name         String // значение опции, напр. «Чёрный» / «5.8 ГГц»
+  priceKopecks Int? // переопределяет цену товара; иначе берётся Product.priceKopecks
+  stockQty     Int         @default(0)
+  sku          String?
+  sortOrder    Int         @default(0)
+  orderItems   OrderItem[]
+
+  @@index([productId])
+}
+
+model DeliveryMethod {
+  id           String  @id @default(cuid())
+  name         String
+  description  String?
+  priceKopecks Int     @default(0)
+  isActive     Boolean @default(true)
+  requiresAddress Boolean @default(true) // самовывоз — false
+  sortOrder    Int     @default(0)
+  orders       Order[]
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  orderNumber          Int         @unique
+  userId               String?
+  user                 User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName         String
+  customerPhone        String
+  customerEmail        String?
+  deliveryMethodId     String
+  deliveryMethod       DeliveryMethod @relation(fields: [deliveryMethodId], references: [id])
+  deliveryAddress      String?
+  comment              String?
+  itemsTotalKopecks    Int
+  deliveryPriceKopecks Int
+  totalKopecks         Int
+  status               String      @default("NEW") // NEW|PAID|PROCESSING|SHIPPED|COMPLETED|CANCELLED
+  paymentStatus        String      @default("PENDING") // PENDING|WAITING_FOR_CAPTURE|SUCCEEDED|CANCELLED
+  yookassaPaymentId    String?     @unique
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String          @id @default(cuid())
+  orderId      String
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String?
+  product      Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variantId    String?
+  variant      ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  productName  String // снимок на момент заказа
+  variantName  String?
+  priceKopecks Int // снимок цены
+  quantity     Int
+
+  @@index([orderId])
+}
+
+/// Редактируемые из админки информационные страницы.
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique // "about" | "delivery-payment" | "contacts"
+  title     String
+  body      String // Markdown/текст
+  updatedAt DateTime @updatedAt
+}
