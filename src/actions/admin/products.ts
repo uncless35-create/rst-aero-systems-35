@@ -11,7 +11,7 @@ export type ProductActionResult =
   | { ok: false; error: string };
 
 function revalidate(slug?: string) {
-  revalidateTag("products");
+  revalidateTag("products", "max");
   revalidatePath("/admin/products");
   revalidatePath("/catalog");
   revalidatePath("/");

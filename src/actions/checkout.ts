@@ -134,7 +134,7 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
   });
 
   // Остатки изменились — сбрасываем кеш витрины
-  revalidateTag("products");
+  revalidateTag("products", "max");
 
   // Оплата ЮKassa (если настроена). Иначе — заказ без онлайн-оплаты.
   if (isYookassaConfigured()) {

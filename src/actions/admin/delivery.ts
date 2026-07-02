@@ -17,7 +17,7 @@ const schema = z.object({
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 function revalidate() {
-  revalidateTag("delivery");
+  revalidateTag("delivery", "max");
   revalidatePath("/admin/delivery-methods");
   revalidatePath("/checkout");
 }

@@ -25,7 +25,7 @@ export async function updateSiteContent(
     create: { key, title, body },
   });
 
-  revalidateTag("content");
+  revalidateTag("content", "max");
   revalidatePath("/admin/pages");
   revalidatePath(`/${key}`);
   return { ok: true };
