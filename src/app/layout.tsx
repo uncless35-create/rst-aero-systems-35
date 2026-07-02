@@ -13,6 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Серверный рендеринг рядом с базой Supabase (eu-west-2, Лондон) — минимум задержек на запросы к БД.
+export const preferredRegion = "lhr1";
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
