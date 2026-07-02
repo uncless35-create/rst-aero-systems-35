@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { ImageOff } from "lucide-react";
 import { Price } from "@/components/storefront/price";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +8,9 @@ import type { ProductCardData } from "@/lib/types";
 
 export function ProductCard({ product, index = 0 }: { product: ProductCardData; index?: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.3), ease: "easeOut" }}
-      className="group"
+    <div
+      className="group animate-fade-up"
+      style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-3xl bg-surface">
@@ -64,6 +58,6 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
           <Price kopecks={product.priceKopecks} oldKopecks={product.oldPriceKopecks} size="sm" />
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }

@@ -17,7 +17,7 @@ export function ProductGallery({ images, name }: { images: GalleryImage[]; name:
     <div className="space-y-3">
       <div className="relative aspect-square overflow-hidden rounded-[2rem] bg-surface">
         {has ? (
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={index}
               initial={{ opacity: 0 }}
