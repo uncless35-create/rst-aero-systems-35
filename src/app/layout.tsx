@@ -14,12 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
     default: "RST AERO SYSTEMS — FPV-дроны, тинивупы и комплектующие",
     template: "%s · RST AERO SYSTEMS",
   },
   description:
-    "Интернет-магазин RST AERO SYSTEMS: FPV-дроны, тинивупы, запчасти и аппаратура. Доставка по России, оплата картой и СБП.",
+    "Интернет-магазин RST AERO SYSTEMS: FPV-дроны, тинивупы, синивупы, запчасти и аппаратура. Доставка по России, оплата картой и СБП.",
+  keywords: [
+    "FPV дрон", "купить FPV дрон", "тинивуп", "синивуп", "cinewhoop",
+    "FPV очки", "аппаратура управления", "ELRS", "аккумулятор LiPo",
+    "полётный контроллер", "RST AERO",
+  ],
+  openGraph: {
+    type: "website",
+    siteName: "RST AERO SYSTEMS",
+    locale: "ru_RU",
+  },
 };
 
 export default function RootLayout({
