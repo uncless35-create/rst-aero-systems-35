@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
@@ -17,6 +17,7 @@ const schema = z.object({
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 function revalidate() {
+  revalidateTag("delivery");
   revalidatePath("/admin/delivery-methods");
   revalidatePath("/checkout");
 }

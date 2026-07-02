@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/slug";
@@ -11,6 +11,7 @@ export type ProductActionResult =
   | { ok: false; error: string };
 
 function revalidate(slug?: string) {
+  revalidateTag("products");
   revalidatePath("/admin/products");
   revalidatePath("/catalog");
   revalidatePath("/");

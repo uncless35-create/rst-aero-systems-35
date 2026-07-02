@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
@@ -25,6 +25,7 @@ export async function updateSiteContent(
     create: { key, title, body },
   });
 
+  revalidateTag("content");
   revalidatePath("/admin/pages");
   revalidatePath(`/${key}`);
   return { ok: true };

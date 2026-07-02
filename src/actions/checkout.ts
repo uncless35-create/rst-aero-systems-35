@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isYookassaConfigured, createPayment } from "@/lib/yookassa";
@@ -131,6 +132,9 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
 
     return created;
   });
+
+  // Остатки изменились — сбрасываем кеш витрины
+  revalidateTag("products");
 
   // Оплата ЮKassa (если настроена). Иначе — заказ без онлайн-оплаты.
   if (isYookassaConfigured()) {
