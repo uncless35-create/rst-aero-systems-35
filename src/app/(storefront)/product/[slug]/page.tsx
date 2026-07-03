@@ -5,8 +5,9 @@ import { ChevronRight } from "lucide-react";
 import { ProductGallery } from "@/components/storefront/product-gallery";
 import { ProductPurchasePanel } from "@/components/storefront/product-purchase-panel";
 import { FavoriteButton } from "@/components/storefront/favorite-button";
+import { ProductGrid } from "@/components/storefront/product-grid";
 import { Badge } from "@/components/ui/badge";
-import { getProductBySlug } from "@/lib/queries";
+import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { parseAttributes } from "@/lib/constants";
 
 type Params = Promise<{ slug: string }>;
@@ -29,6 +30,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   const attributes = parseAttributes(product.attributes);
   const firstImage = product.images[0]?.url ?? null;
   const inStock = product.stockQty > 0 || product.variants.some((v) => v.stockQty > 0);
+  const related = await getRelatedProducts(product.categoryId, product.id, 4);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
@@ -116,6 +118,14 @@ export default async function ProductPage({ params }: { params: Params }) {
           ) : null}
         </div>
       </div>
+
+      {/* Похожие товары */}
+      {related.length > 0 ? (
+        <section className="mt-16">
+          <h2 className="mb-6 text-xl font-semibold tracking-tight">Похожие товары</h2>
+          <ProductGrid products={related} />
+        </section>
+      ) : null}
     </div>
   );
 }

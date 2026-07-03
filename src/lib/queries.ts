@@ -140,3 +140,83 @@ const _getSiteContent = unstable_cache(
 export function getSiteContent(key: string) {
   return _getSiteContent(key);
 }
+
+/** Категории с одним изображением-обложкой (первое фото товара из категории). */
+export const getCategoriesWithImage = unstable_cache(
+  async () => {
+    const categories = await prisma.category.findMany({
+      where: { isVisible: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        products: {
+          where: { isActive: true },
+          orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+          take: 1,
+          include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+        },
+        _count: { select: { products: { where: { isActive: true } } } },
+      },
+    });
+    return categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      image: c.products[0]?.images[0]?.url ?? null,
+      productCount: c._count.products,
+    }));
+  },
+  ["categories-with-image"],
+  { tags: ["categories", "products"], revalidate: 300 }
+);
+
+/** Товары со скидкой (задана старая цена больше текущей). */
+const _getDiscounted = unstable_cache(
+  async (limit: number) => {
+    const products = await prisma.product.findMany({
+      where: { isActive: true, oldPriceKopecks: { not: null } },
+      include: productCardInclude,
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    });
+    return products.filter((p) => (p.oldPriceKopecks ?? 0) > p.priceKopecks).map(toCardData);
+  },
+  ["discounted-products"],
+  { tags: ["products"], revalidate: 300 }
+);
+export function getDiscountedProducts(limit = 8) {
+  return _getDiscounted(limit);
+}
+
+/** Похожие товары: из той же категории, кроме текущего. */
+const _getRelated = unstable_cache(
+  async (categoryId: string, excludeId: string, limit: number) => {
+    const products = await prisma.product.findMany({
+      where: { isActive: true, categoryId, NOT: { id: excludeId } },
+      include: productCardInclude,
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    });
+    return products.map(toCardData);
+  },
+  ["related-products"],
+  { tags: ["products"], revalidate: 300 }
+);
+export function getRelatedProducts(categoryId: string, excludeId: string, limit = 4) {
+  return _getRelated(categoryId, excludeId, limit);
+}
+
+/** Поиск товаров по названию (регистронезависимо, Postgres). */
+export async function searchProducts(query: string) {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const products = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      name: { contains: q, mode: "insensitive" },
+    },
+    include: productCardInclude,
+    orderBy: { name: "asc" },
+    take: 60,
+  });
+  return products.map(toCardData);
+}

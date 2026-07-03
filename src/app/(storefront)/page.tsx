@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { CategoryPills } from "@/components/storefront/category-pills";
+import { CategoryGrid } from "@/components/storefront/category-grid";
+import { Benefits } from "@/components/storefront/benefits";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Button } from "@/components/ui/button";
 import {
-  getVisibleCategories,
+  getCategoriesWithImage,
   getFeaturedProducts,
+  getDiscountedProducts,
   getNewProducts,
 } from "@/lib/queries";
 
 export default async function HomePage() {
-  const [categories, featured, fresh] = await Promise.all([
-    getVisibleCategories(),
+  const [categories, featured, discounted, fresh] = await Promise.all([
+    getCategoriesWithImage(),
     getFeaturedProducts(8),
+    getDiscountedProducts(8),
     getNewProducts(4),
   ]);
 
@@ -47,20 +50,25 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Категории */}
-      <section className="pt-10">
-        <div className="mb-4 flex items-baseline justify-between">
+      {/* Преимущества */}
+      <section className="pt-6">
+        <Benefits />
+      </section>
+
+      {/* Категории с фото */}
+      <section className="pt-12">
+        <div className="mb-6 flex items-baseline justify-between">
           <h2 className="text-xl font-semibold tracking-tight">Категории</h2>
           <Link href="/catalog" className="text-sm text-muted-foreground hover:text-foreground">
-            Все
+            Все товары
           </Link>
         </div>
-        <CategoryPills categories={categories} showAll={false} />
+        <CategoryGrid categories={categories} />
       </section>
 
       {/* Хиты */}
       {featured.length > 0 && (
-        <section className="pt-12">
+        <section className="pt-14">
           <div className="mb-6 flex items-baseline justify-between">
             <h2 className="text-xl font-semibold tracking-tight">Хиты продаж</h2>
             <Link href="/catalog" className="text-sm text-muted-foreground hover:text-foreground">
@@ -68,6 +76,19 @@ export default async function HomePage() {
             </Link>
           </div>
           <ProductGrid products={featured} />
+        </section>
+      )}
+
+      {/* Скидки */}
+      {discounted.length > 0 && (
+        <section className="pt-14">
+          <div className="mb-6 flex items-baseline justify-between">
+            <h2 className="text-xl font-semibold tracking-tight">Скидки</h2>
+            <Link href="/catalog?sort=price-asc" className="text-sm text-muted-foreground hover:text-foreground">
+              Смотреть все
+            </Link>
+          </div>
+          <ProductGrid products={discounted} />
         </section>
       )}
 
