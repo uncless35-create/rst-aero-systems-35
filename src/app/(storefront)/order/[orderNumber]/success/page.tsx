@@ -16,6 +16,9 @@ import {
 
 export const metadata: Metadata = { title: "Заказ оформлен" };
 
+// Всегда свежие данные (статус оплаты меняется), без кеша
+export const revalidate = 0;
+
 type Params = Promise<{ orderNumber: string }>;
 
 export default async function OrderSuccessPage({ params }: { params: Params }) {

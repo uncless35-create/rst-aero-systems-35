@@ -12,6 +12,8 @@ import { parseAttributes } from "@/lib/constants";
 
 type Params = Promise<{ slug: string }>;
 
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);

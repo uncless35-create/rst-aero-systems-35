@@ -11,6 +11,9 @@ import {
   getNewProducts,
 } from "@/lib/queries";
 
+// ISR: предрендер + обновление раз в 5 мин (и мгновенно через revalidateTag из админки)
+export const revalidate = 300;
+
 export default async function HomePage() {
   const [categories, featured, discounted, fresh] = await Promise.all([
     getCategoriesWithImage(),

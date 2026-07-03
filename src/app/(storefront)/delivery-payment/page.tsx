@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { ContentPage } from "@/components/storefront/content-page";
 import { getSiteContent } from "@/lib/queries";
 
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent("delivery-payment");
   return { title: content?.title ?? "Доставка и оплата" };

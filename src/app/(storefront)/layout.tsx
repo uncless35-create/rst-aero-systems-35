@@ -2,10 +2,6 @@ import { SiteHeader } from "@/components/storefront/site-header";
 import { BottomNav } from "@/components/storefront/bottom-nav";
 import { Footer } from "@/components/storefront/footer";
 
-// Витрина рендерится динамически (данные из БД всегда свежие),
-// поэтому сборка не обращается к базе.
-export const dynamic = "force-dynamic";
-
 export default function StorefrontLayout({
   children,
 }: {
