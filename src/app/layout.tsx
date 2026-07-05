@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     siteName: "RST AERO SYSTEMS",
     locale: "ru_RU",
   },
+  verification: {
+    yandex: "57bf0d7425bbbdf3",
+  },
 };
 
 export default function RootLayout({
