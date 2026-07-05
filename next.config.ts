@@ -5,15 +5,22 @@ const nextConfig: NextConfig = {
     // Оптимизированные изображения кешируются надолго (31 день) — не перекачиваются каждый раз
     minimumCacheTTL: 2678400,
     remotePatterns: [
-      // Плейсхолдеры для сида (dev)
-      { protocol: "https", hostname: "picsum.photos" },
-      { protocol: "https", hostname: "fastly.picsum.photos" },
-      // Supabase Storage (прод) — поддомен подставится автоматически
+      // Supabase Storage (загрузка фото из админки)
       { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
   async headers() {
     return [
+      {
+        // Security-заголовки для всех страниц
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
       {
         // Фото товаров из public/products — неизменяемые, кешируем на год
         source: "/products/:path*",
