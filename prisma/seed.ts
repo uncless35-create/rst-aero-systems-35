@@ -230,6 +230,19 @@ const PRICES: Record<string, number> = {
   "akkumulyator-betafpv-1s-550mah-hv-bt2-0": 395,
   "akkumulyator-ovonic-6s-1300mah-xt60": 2010,
   "akkumulyator-ovonic-6s-1550mah-xt60": 2495,
+  // --- Новинки (июль 2026) ---
+  "dji-o4-air-unit-pro": 23490,
+  "kamera-caddx-ratel-2": 2640,
+  "videoperedatchik-rush-fpv-solo-max": 5800,
+  "antenna-rush-fpv-cherry": 810,
+  "napravlennaya-antenna-patch-geprc-triple-feeed-patch": 1500,
+  "gps-sologood-m10-180-s-kompasom": 1165,
+  "geprc-vapor-x5-analog-elrs": 20800,
+  "geprc-vapor-x5-o4-pro-elrs": 41680,
+  "radiomaster-gx12-crush": 17900,
+  "radiomaster-tx15-max": 15500,
+  "gnb-2s-550mah-xt30": 820,
+  "betafpv-1s-6-port-charger": 1445,
 };
 
 // Соответствие: папка (trim) → категория
