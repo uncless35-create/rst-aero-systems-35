@@ -26,13 +26,18 @@ const CATALOG_DIR = path.join(process.cwd(), "каталог");
 const PUBLIC_DIR = path.join(process.cwd(), "public", "products");
 
 // Файлы-дубли, которые не импортируем (товар уже есть под другим именем файла)
-const SKIP_SLUGS = new Set<string>([
-  "betafpv-meteor-75-pro-o4-elrs", // дубль «Тинивуп Betafpv Meteor 75 pro o4 (elrs)»
-]);
+const SKIP_SLUGS = new Set<string>([]);
 
 // Причёсанные названия, описания и характеристики по slug товара.
-type Meta = { name: string; description: string; attributes: [string, string][] };
+// slug — необязательное переопределение адреса страницы товара.
+type Meta = { name: string; description: string; attributes: [string, string][]; slug?: string };
 const META: Record<string, Meta> = {
+  "betafpv-meteor-75-pro-o4-elrs": {
+    slug: "tinivup-betafpv-meteor-75-pro-o4-pnp",
+    name: "Тинивуп BetaFPV Meteor75 Pro O4 (PNP, без юнита)",
+    description: "Версия тинивупа BetaFPV Meteor75 Pro без видеосистемы — для установки собственного юнита DJI O4. Приёмник ELRS на борту.",
+    attributes: [["Видеосистема", "Не установлена (под DJI O4)"], ["Управление", "ELRS"], ["Комплектация", "PNP"]],
+  },
   // --- Новые товары (июль 2026) ---
   "gps-sologood-m10-180-s-kompasom": {
     name: "GPS-модуль SoloGood M10-180 (с компасом)",
@@ -243,6 +248,7 @@ const PRICES: Record<string, number> = {
   "radiomaster-tx15-max": 15500,
   "gnb-2s-550mah-xt30": 820,
   "betafpv-1s-6-port-charger": 1445,
+  "betafpv-meteor-75-pro-o4-elrs": 8490, // Meteor75 Pro O4 (PNP, без юнита)
 };
 
 // Соответствие: папка (trim) → категория
@@ -334,12 +340,13 @@ async function main() {
       fs.copyFileSync(path.join(srcDir, file), path.join(destDir, imageName));
       const imageUrl = `/products/${map.slug}/${imageName}`;
 
-      // Уникальный slug товара
-      let slug = baseSlug;
-      let n = 1;
-      while (await prisma.product.findUnique({ where: { slug } })) { n++; slug = `${baseSlug}-${n}`; }
-
       const meta = META[baseSlug];
+
+      // Уникальный slug товара (META может переопределить адрес)
+      const desiredSlug = meta?.slug ?? baseSlug;
+      let slug = desiredSlug;
+      let n = 1;
+      while (await prisma.product.findUnique({ where: { slug } })) { n++; slug = `${desiredSlug}-${n}`; }
       const displayName = meta?.name ?? name;
       const attrsJson = meta?.attributes.length
         ? JSON.stringify(meta.attributes.map(([n, v]) => ({ name: n, value: v })))
