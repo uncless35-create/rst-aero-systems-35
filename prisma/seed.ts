@@ -25,9 +25,75 @@ function cleanName(raw: string): string {
 const CATALOG_DIR = path.join(process.cwd(), "каталог");
 const PUBLIC_DIR = path.join(process.cwd(), "public", "products");
 
+// Файлы-дубли, которые не импортируем (товар уже есть под другим именем файла)
+const SKIP_SLUGS = new Set<string>([
+  "betafpv-meteor-75-pro-o4-elrs", // дубль «Тинивуп Betafpv Meteor 75 pro o4 (elrs)»
+]);
+
 // Причёсанные названия, описания и характеристики по slug товара.
 type Meta = { name: string; description: string; attributes: [string, string][] };
 const META: Record<string, Meta> = {
+  // --- Новые товары (июль 2026) ---
+  "gps-sologood-m10-180-s-kompasom": {
+    name: "GPS-модуль SoloGood M10-180 (с компасом)",
+    description: "GPS-модуль SoloGood на чипе M10 со встроенным компасом — для возврата домой (RTH) и удержания позиции.",
+    attributes: [["Чип", "M10"], ["Компас", "Есть"]],
+  },
+  "betafpv-1s-6-port-charger": {
+    name: "Зарядное устройство BetaFPV 1S (6 портов)",
+    description: "Зарядное устройство BetaFPV на 6 портов для 1S аккумуляторов — заряжает до шести батарей тинивупа одновременно.",
+    attributes: [["Портов", "6"], ["Тип батарей", "1S LiPo/LiHV"]],
+  },
+  "gnb-2s-550mah-xt30": {
+    name: "Аккумулятор GNB 2S 550mAh (XT30)",
+    description: "Аккумулятор GNB 2S 550mAh с разъёмом XT30 — для лёгких вупов и микро-дронов на 2S.",
+    attributes: [["Ёмкость", "550 mAh"], ["Банки", "2S"], ["Разъём", "XT30"]],
+  },
+  "radiomaster-gx12-crush": {
+    name: "Аппаратура RadioMaster GX12 Crush (ELRS)",
+    description: "Аппаратура управления RadioMaster GX12 в расцветке Crush: качественные подвесы, встроенный модуль ELRS.",
+    attributes: [["Протокол", "ELRS"], ["Диапазон", "2.4 ГГц"]],
+  },
+  "radiomaster-tx15-max": {
+    name: "Аппаратура RadioMaster TX15 Max (ELRS)",
+    description: "Старшая версия аппаратуры RadioMaster TX15 Max с улучшенной комплектацией и модулем ELRS.",
+    attributes: [["Протокол", "ELRS"], ["Диапазон", "2.4 ГГц"]],
+  },
+  "geprc-vapor-x5-analog-elrs": {
+    name: "FPV-дрон GEPRC Vapor X5 (аналог, ELRS)",
+    description: "5-дюймовый FPV-дрон GEPRC Vapor X5 с аналоговой видеосистемой и приёмником ELRS.",
+    attributes: [["Класс", "5 дюймов"], ["Видеосистема", "Аналоговая"], ["Управление", "ELRS"]],
+  },
+  "geprc-vapor-x5-o4-pro-elrs": {
+    name: "FPV-дрон GEPRC Vapor X5 (DJI O4 Pro, ELRS)",
+    description: "5-дюймовый FPV-дрон GEPRC Vapor X5 с цифровой видеосистемой DJI O4 Pro и приёмником ELRS.",
+    attributes: [["Класс", "5 дюймов"], ["Видеосистема", "DJI O4 Pro"], ["Управление", "ELRS"]],
+  },
+  "dji-o4-air-unit-pro": {
+    name: "Видеосистема DJI O4 Air Unit Pro",
+    description: "Цифровая видеосистема DJI O4 Air Unit Pro: камера и передатчик для полётов в цифровом качестве.",
+    attributes: [["Тип", "Цифровая (DJI O4)"], ["Комплект", "Air Unit Pro"]],
+  },
+  "antenna-rush-fpv-cherry": {
+    name: "Антенна RushFPV Cherry (5.8 ГГц)",
+    description: "Всенаправленная антенна RushFPV Cherry 5.8 ГГц — лёгкая и прочная, для дрона или очков.",
+    attributes: [["Диапазон", "5.8 ГГц"], ["Тип", "Всенаправленная"]],
+  },
+  "videoperedatchik-rush-fpv-solo-max": {
+    name: "Видеопередатчик RushFPV Solo Max (5.8 ГГц)",
+    description: "Мощный аналоговый видеопередатчик RushFPV Solo Max 5.8 ГГц для дальних и уверенных полётов.",
+    attributes: [["Диапазон", "5.8 ГГц"], ["Тип", "Аналоговый VTX"]],
+  },
+  "kamera-caddx-ratel-2": {
+    name: "Камера Caddx Ratel 2",
+    description: "Аналоговая FPV-камера Caddx Ratel 2 — отличная картинка днём и в сумерках.",
+    attributes: [["Тип", "Аналоговая"], ["Матрица", "1/1.8\""]],
+  },
+  "napravlennaya-antenna-patch-geprc-triple-feeed-patch": {
+    name: "Патч-антенна GEPRC Triple Feed Patch (5.8 ГГц)",
+    description: "Направленная патч-антенна GEPRC Triple Feed для очков — усиливает приём сигнала по направлению взгляда.",
+    attributes: [["Диапазон", "5.8 ГГц"], ["Тип", "Направленная (патч)"]],
+  },
   "dron-geprc-vapor-d5-dji-o4-pro-elrs-2-4": {
     name: "FPV-дрон GEPRC Vapor D5 (DJI O4 Pro, ELRS 2.4)",
     description: "Готовый 5-дюймовый FPV-дрон с цифровой видеосистемой DJI O4 Pro и приёмником ELRS 2.4 ГГц. Настроен и готов к полёту.",
@@ -175,6 +241,8 @@ const CATEGORY_MAP: Record<string, { name: string; slug: string; description: st
   "Очки и шлема": { name: "Очки и шлемы", slug: "ochki-i-shlemy", description: "FPV-очки и шлемы", sortOrder: 4 },
   "Аккамуляторы и зарядные устройства": { name: "Аккумуляторы и зарядные устройства", slug: "akkumulyatory", description: "Аккумуляторы и зарядки", sortOrder: 5 },
   "Полетные контроллеры и стеки": { name: "Полётные контроллеры и стеки", slug: "poletnye-kontrollery-i-steki", description: "Полётные контроллеры, стеки, ESC", sortOrder: 6 },
+  "Камеры, VTX, юниты и антенны": { name: "Камеры, VTX и антенны", slug: "kamery-vtx-antenny", description: "FPV-камеры, видеопередатчики, цифровые юниты и антенны", sortOrder: 7 },
+  "GPS": { name: "GPS-модули", slug: "gps", description: "GPS-модули и компасы", sortOrder: 8 },
 };
 
 async function main() {
@@ -245,6 +313,7 @@ async function main() {
     for (const file of files) {
       const name = cleanName(file);
       const baseSlug = slugify(name);
+      if (SKIP_SLUGS.has(baseSlug)) { console.log(`  (пропущен дубль: ${file})`); continue; }
       const ext = file.split(".").pop()!.toLowerCase();
       const imageName = `${baseSlug}.${ext}`;
 
@@ -263,14 +332,16 @@ async function main() {
         ? JSON.stringify(meta.attributes.map(([n, v]) => ({ name: n, value: v })))
         : null;
 
+      const priceRub = PRICES[baseSlug] ?? 0;
       await prisma.product.create({
         data: {
           name: displayName,
           slug,
           categoryId: catBySlug[map.slug],
-          priceKopecks: (PRICES[baseSlug] ?? 0) * 100,
+          priceKopecks: priceRub * 100,
           stockQty: 10,
-          isActive: true,
+          // Товары без цены скрыты с витрины — включатся после прайс-листа
+          isActive: priceRub > 0,
           isFeatured: Boolean(map.featured),
           description: meta?.description ?? null,
           attributes: attrsJson,
