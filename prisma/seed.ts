@@ -18,7 +18,8 @@ function slugify(input: string): string {
 }
 
 function cleanName(raw: string): string {
-  return raw.normalize("NFC").replace(/\.(jpe?g|png)$/i, "").replace(/\s+/g, " ").trim()
+  // Срезаем расширение (в т.ч. случайно задвоенное: «фото 2.jpeg .jpeg»)
+  return raw.normalize("NFC").replace(/(\s*\.(jpe?g|png|webp))+$/i, "").replace(/\s+/g, " ").trim()
     .replace(/Аккамулятор/gi, (m) => (m[0] === "А" ? "Аккумулятор" : "аккумулятор"));
 }
 
@@ -328,17 +329,36 @@ async function main() {
     const destDir = path.join(PUBLIC_DIR, map.slug);
     fs.mkdirSync(destDir, { recursive: true });
 
-    const files = fs.readdirSync(srcDir).filter((f) => /\.(jpe?g|png)$/i.test(f));
-    for (const file of files) {
-      const name = cleanName(file);
-      const baseSlug = slugify(name);
-      if (SKIP_SLUGS.has(baseSlug)) { console.log(`  (пропущен дубль: ${file})`); continue; }
-      const ext = file.split(".").pop()!.toLowerCase();
-      const imageName = `${baseSlug}.${ext}`;
+    const files = fs.readdirSync(srcDir).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
 
-      // Копируем фото в public/products/<catSlug>/
-      fs.copyFileSync(path.join(srcDir, file), path.join(destDir, imageName));
-      const imageUrl = `/products/${map.slug}/${imageName}`;
+    // Группировка доп. фото: файл «Название 2.jpeg» — второе фото товара «Название.jpeg»
+    const slugOf = new Map(files.map((f) => [f, slugify(cleanName(f))]));
+    const allSlugs = new Set(slugOf.values());
+    const groups = new Map<string, string[]>(); // baseSlug → файлы (главное фото первым)
+    for (const file of files) {
+      const s = slugOf.get(file)!;
+      const m = s.match(/^(.+)-(\d+)$/);
+      if (m && allSlugs.has(m[1])) {
+        groups.set(m[1], [...(groups.get(m[1]) ?? []), file]);
+      } else {
+        groups.set(s, [file, ...(groups.get(s) ?? [])]);
+      }
+    }
+
+    let createdInCat = 0;
+    for (const [baseSlug, groupFiles] of groups) {
+      if (SKIP_SLUGS.has(baseSlug)) { console.log(`  (пропущен дубль: ${groupFiles[0]})`); continue; }
+      const name = cleanName(groupFiles[0]);
+
+      // Копируем все фото товара в public/products/<catSlug>/
+      const imageUrls: string[] = [];
+      for (let i = 0; i < groupFiles.length; i++) {
+        const f = groupFiles[i];
+        const ext = f.split(".").pop()!.toLowerCase();
+        const imageName = i === 0 ? `${baseSlug}.${ext}` : `${baseSlug}-${i + 1}.${ext}`;
+        fs.copyFileSync(path.join(srcDir, f), path.join(destDir, imageName));
+        imageUrls.push(`/products/${map.slug}/${imageName}`);
+      }
 
       const meta = META[baseSlug];
 
@@ -365,12 +385,15 @@ async function main() {
           isFeatured: Boolean(map.featured),
           description: meta?.description ?? null,
           attributes: attrsJson,
-          images: { create: [{ url: imageUrl, alt: displayName, sortOrder: 0 }] },
+          images: {
+            create: imageUrls.map((url, i) => ({ url, alt: displayName, sortOrder: i })),
+          },
         },
       });
       total++;
+      createdInCat++;
     }
-    console.log(`  • ${map.name}: ${files.length} тов.`);
+    console.log(`  • ${map.name}: ${createdInCat} тов.`);
   }
   console.log(`✓ Товары: ${total}`);
 
