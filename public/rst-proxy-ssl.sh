@@ -27,7 +27,7 @@ server {
     ssl_certificate     /etc/letsencrypt/live/rst-aero.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/rst-aero.ru/privkey.pem;
 
-    resolver 1.1.1.1 8.8.8.8 valid=60s;
+    resolver 77.88.8.8 8.8.8.8 valid=60s;
     client_max_body_size 25m;
     gzip on;
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
