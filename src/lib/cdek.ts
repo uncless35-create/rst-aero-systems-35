@@ -18,9 +18,13 @@ export const CDEK_FROM_CITY_CODE = Number(process.env.CDEK_FROM_CITY_CODE ?? 44)
 /** Вес по умолчанию (г) для товаров без указанного веса. */
 export const CDEK_DEFAULT_WEIGHT_GRAMS = Number(process.env.CDEK_DEFAULT_WEIGHT_GRAMS ?? 500);
 
-/** Настроены ли боевые ключи (иначе работаем на тестовом контуре). */
+/**
+ * Настроен ли боевой СДЭК. Опираемся на несекретный CDEK_API_URL (боевой домен),
+ * т.к. эта проверка вызывается и при сборке, куда Sensitive-секреты могут не попадать.
+ * Сам аккаунт/пароль читаются в рантайме, где Sensitive-переменные доступны.
+ */
 export function isCdekProduction(): boolean {
-  return API_URL.includes("api.cdek.ru") && !!process.env.CDEK_ACCOUNT && !!process.env.CDEK_PASSWORD;
+  return API_URL.includes("api.cdek.ru");
 }
 
 export function getCdekApiUrl(): string {
