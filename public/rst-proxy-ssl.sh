@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 set -e
-BACKEND="rst-aero-systems-35-29rj.vercel.app"
+VHOST="rst-aero-systems-35-29rj.vercel.app"
 echo ">>> Получаю SSL-сертификат для rst-aero.ru..."
 certbot certonly --webroot -w /var/www/certbot -d rst-aero.ru \
   --agree-tos -m admin@rst-aero.ru --non-interactive || {
-  echo ""; echo "!!! Сертификат не выдан. Убедись, что DNS rst-aero.ru уже указывает на этот сервер (178.20.208.26), и запусти команду ещё раз."; exit 1; }
+  echo ""; echo "!!! Сертификат не выдан. DNS rst-aero.ru должен указывать на 178.20.208.26. Смени DNS и запусти снова."; exit 1; }
 
-echo ">>> Настраиваю прокси на Vercel с кешем..."
+echo ">>> Настраиваю прокси на Vercel (по рабочим IP) с кешем..."
 cat > /etc/nginx/sites-available/rst-aero.ru <<NGINX
 proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=rst:20m max_size=1g inactive=7d use_temp_path=off;
+
+upstream vercel_backend {
+    server 216.198.79.195:443 max_fails=3 fail_timeout=15s;
+    server 64.29.17.195:443 backup;
+    keepalive 16;
+}
 
 server {
     listen 80;
@@ -26,17 +32,12 @@ server {
 
     ssl_certificate     /etc/letsencrypt/live/rst-aero.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/rst-aero.ru/privkey.pem;
-
-    resolver 77.88.8.8 8.8.8.8 valid=60s;
     client_max_body_size 25m;
-    gzip on;
-    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
 
     location / {
-        set \$backend "$BACKEND";
-        proxy_pass https://\$backend;
+        proxy_pass https://vercel_backend;
         proxy_ssl_server_name on;
-        proxy_ssl_name \$backend;
+        proxy_ssl_name $VHOST;
         proxy_http_version 1.1;
         proxy_set_header Host rst-aero.ru;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -57,4 +58,4 @@ NGINX
 nginx -t
 systemctl reload nginx
 echo ""
-echo "==== ГОТОВО: сайт rst-aero.ru работает через российский прокси с SSL ===="
+echo "==== ГОТОВО: rst-aero.ru работает через российский прокси с SSL ===="
