@@ -35,7 +35,13 @@ export type DeliveryOption = {
   provider: string | null;
 };
 
-export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOption[] }) {
+export function CheckoutForm({
+  deliveryMethods,
+  cdekReady = false,
+}: {
+  deliveryMethods: DeliveryOption[];
+  cdekReady?: boolean;
+}) {
   const router = useRouter();
   const hydrated = useHydrated();
   const items = useCartStore((s) => s.items);
@@ -56,9 +62,10 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
 
   const selectedDeliveryId = watch("deliveryMethodId");
   const selectedDelivery = deliveryMethods.find((d) => d.id === selectedDeliveryId);
-  // Виджет СДЭК включается только при наличии ключа карт. Иначе метод «СДЭК»
-  // работает как обычный (адрес + фиксированная цена) — деплой без ключа не ломает оформление.
-  const cdekEnabled = !!process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
+  // Виджет СДЭК включается только когда есть И ключ карт (клиент), И боевые ключи API СДЭК
+  // (сервер, cdekReady). Иначе метод «СДЭК» работает как обычный (адрес + фиксированная цена) —
+  // никакой битой карты на витрине, пока не подключены ключи.
+  const cdekEnabled = cdekReady && !!process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
   const isCdek = selectedDelivery?.provider === "CDEK" && cdekEnabled;
 
   const cartWeightGrams = items.reduce(
