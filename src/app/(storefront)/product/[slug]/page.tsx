@@ -86,6 +86,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 stockQty: product.stockQty,
                 variantLabel: product.variantLabel,
                 image: firstImage,
+                weightGrams: product.weightGrams,
                 variants: product.variants.map((v) => ({
                   id: v.id,
                   name: v.name,

@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isYookassaConfigured, createPayment } from "@/lib/yookassa";
+import { calculateTariff, CDEK_DEFAULT_WEIGHT_GRAMS } from "@/lib/cdek";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation/checkout";
 
 export type CreateOrderResult =
@@ -26,7 +27,15 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
     where: { id: data.deliveryMethodId, isActive: true },
   });
   if (!delivery) return { ok: false, error: "Способ доставки недоступен" };
-  if (delivery.requiresAddress && !data.deliveryAddress?.trim()) {
+
+  // СДЭК-виджет применяется, только если клиент прислал выбор ПВЗ.
+  // Иначе (нет ключа карт / виджет недоступен) метод работает как обычный: адрес + фикс. цена.
+  const useCdek = delivery.provider === "CDEK" && !!data.cdek;
+  if (useCdek) {
+    if (data.cdek!.cityCode == null) {
+      return { ok: false, error: "Не удалось определить город доставки, выберите пункт заново" };
+    }
+  } else if (delivery.requiresAddress && !data.deliveryAddress?.trim()) {
     return { ok: false, error: "Укажите адрес доставки" };
   }
 
@@ -47,10 +56,13 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
     quantity: number;
   }[] = [];
   let itemsTotalKopecks = 0;
+  let totalWeightGrams = 0;
 
   for (const item of data.items) {
     const product = productMap.get(item.productId);
     if (!product) return { ok: false, error: "Товар недоступен" };
+
+    totalWeightGrams += (product.weightGrams ?? CDEK_DEFAULT_WEIGHT_GRAMS) * item.quantity;
 
     let priceKopecks = product.priceKopecks;
     let variantName: string | null = null;
@@ -81,7 +93,31 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
     });
   }
 
-  const deliveryPriceKopecks = delivery.priceKopecks;
+  // Стоимость доставки. Для СДЭК пересчитываем на сервере — клиентской сумме не доверяем.
+  let deliveryPriceKopecks = delivery.priceKopecks;
+  let cdekPvzCode: string | null = null;
+  let cdekCityCode: number | null = null;
+  let cdekTariffCode: number | null = null;
+
+  if (useCdek && data.cdek) {
+    const toCityCode = data.cdek.cityCode as number; // проверено выше на null
+    cdekCityCode = toCityCode;
+    cdekTariffCode = data.cdek.tariffCode;
+    cdekPvzCode = data.cdek.pvzCode;
+    try {
+      const tariff = await calculateTariff({
+        tariffCode: data.cdek.tariffCode,
+        toCityCode,
+        weightGrams: totalWeightGrams,
+      });
+      deliveryPriceKopecks = tariff.deliverySumKopecks;
+    } catch (e) {
+      // СДЭК недоступен — берём сумму, показанную клиенту виджетом (в проверенном диапазоне)
+      console.error("СДЭК: пересчёт стоимости не удался, берём клиентскую сумму:", e);
+      deliveryPriceKopecks = data.cdek.deliverySumKopecks;
+    }
+  }
+
   const totalKopecks = itemsTotalKopecks + deliveryPriceKopecks;
 
   // Привязка к пользователю, если он авторизован
@@ -105,6 +141,9 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
         customerEmail: data.customerEmail || null,
         deliveryMethodId: delivery.id,
         deliveryAddress: data.deliveryAddress || null,
+        cdekPvzCode,
+        cdekCityCode,
+        cdekTariffCode,
         comment: data.comment || null,
         itemsTotalKopecks,
         deliveryPriceKopecks,

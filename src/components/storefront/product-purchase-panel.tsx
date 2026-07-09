@@ -26,6 +26,7 @@ export type PurchaseProduct = {
   stockQty: number;
   variantLabel: string | null;
   image: string | null;
+  weightGrams: number | null;
   variants: PurchaseVariant[];
 };
 
@@ -60,6 +61,7 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
       image: product.image,
       priceKopecks: effectivePrice,
       maxStock,
+      weightGrams: product.weightGrams,
       quantity: qty,
     });
     setAdded(true);

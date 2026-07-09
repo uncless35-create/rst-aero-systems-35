@@ -280,9 +280,9 @@ async function main() {
 
   // --- Способы доставки ---
   const deliveries = [
-    { name: "Самовывоз", description: "Из пункта выдачи в вашем городе", priceKopecks: 0, requiresAddress: false, sortOrder: 0 },
-    { name: "СДЭК", description: "Доставка курьером или в пункт выдачи", priceKopecks: 35000, requiresAddress: true, sortOrder: 1 },
-    { name: "Почта России", description: "Доставка в любое отделение", priceKopecks: 25000, requiresAddress: true, sortOrder: 2 },
+    { name: "Самовывоз", description: "Из пункта выдачи в вашем городе", priceKopecks: 0, requiresAddress: false, provider: null, sortOrder: 0 },
+    { name: "СДЭК", description: "Пункт выдачи или курьер — стоимость по тарифу", priceKopecks: 35000, requiresAddress: true, provider: "CDEK", sortOrder: 1 },
+    { name: "Почта России", description: "Доставка в любое отделение", priceKopecks: 25000, requiresAddress: true, provider: null, sortOrder: 2 },
   ];
   for (const d of deliveries) {
     const existing = await prisma.deliveryMethod.findFirst({ where: { name: d.name } });

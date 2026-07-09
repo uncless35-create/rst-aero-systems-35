@@ -26,6 +26,7 @@ export const productSchema = z.object({
   priceKopecks: z.coerce.number().int().min(0, "Цена не может быть отрицательной"),
   oldPriceKopecks: z.number().int().min(0).nullable().optional(),
   stockQty: z.coerce.number().int().min(0).default(0),
+  weightGrams: z.coerce.number().int().min(0).max(1_000_000).nullable().optional(),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   badge: z.string().trim().optional().nullable(),

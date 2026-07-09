@@ -42,6 +42,7 @@ export default async function EditProductPage({ params }: { params: Params }) {
           priceRub: kopecksToRubles(product.priceKopecks),
           oldPriceRub: product.oldPriceKopecks ? kopecksToRubles(product.oldPriceKopecks) : null,
           stockQty: product.stockQty,
+          weightGrams: product.weightGrams,
           isActive: product.isActive,
           isFeatured: product.isFeatured,
           badge: product.badge ?? "",

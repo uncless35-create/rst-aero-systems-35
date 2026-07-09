@@ -24,6 +24,7 @@ export type DeliveryRow = {
   priceKopecks: number;
   isActive: boolean;
   requiresAddress: boolean;
+  provider: string | null;
   sortOrder: number;
 };
 
@@ -33,6 +34,7 @@ type FormState = {
   priceRub: number;
   isActive: boolean;
   requiresAddress: boolean;
+  isCdek: boolean;
   sortOrder: number;
 };
 
@@ -42,6 +44,7 @@ const empty: FormState = {
   priceRub: 0,
   isActive: true,
   requiresAddress: true,
+  isCdek: false,
   sortOrder: 0,
 };
 
@@ -66,6 +69,7 @@ export function DeliveryManager({ methods }: { methods: DeliveryRow[] }) {
       priceRub: kopecksToRubles(m.priceKopecks),
       isActive: m.isActive,
       requiresAddress: m.requiresAddress,
+      isCdek: m.provider === "CDEK",
       sortOrder: m.sortOrder,
     });
     setOpen(true);
@@ -79,6 +83,7 @@ export function DeliveryManager({ methods }: { methods: DeliveryRow[] }) {
       priceKopecks: rublesToKopecks(form.priceRub),
       isActive: form.isActive,
       requiresAddress: form.requiresAddress,
+      provider: form.isCdek ? "CDEK" : null,
       sortOrder: form.sortOrder,
     };
     const res = editingId
@@ -126,8 +131,12 @@ export function DeliveryManager({ methods }: { methods: DeliveryRow[] }) {
                     {!m.isActive && <span className="text-xs text-muted-foreground">(скрыт)</span>}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {m.priceKopecks === 0 ? "Бесплатно" : formatRub(m.priceKopecks)}
-                    {m.requiresAddress ? " · нужен адрес" : " · самовывоз"}
+                    {m.provider === "CDEK"
+                      ? "СДЭК · расчёт по карте"
+                      : m.priceKopecks === 0
+                        ? "Бесплатно"
+                        : formatRub(m.priceKopecks)}
+                    {m.provider === "CDEK" ? "" : m.requiresAddress ? " · нужен адрес" : " · самовывоз"}
                   </p>
                 </div>
                 <button onClick={() => openEdit(m)} className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground" aria-label="Редактировать">
@@ -173,6 +182,18 @@ export function DeliveryManager({ methods }: { methods: DeliveryRow[] }) {
             <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
               <Label htmlFor="d-addr">Требуется адрес доставки</Label>
               <Switch id="d-addr" checked={form.requiresAddress} onCheckedChange={(v) => setForm({ ...form, requiresAddress: v })} />
+            </div>
+            <div className="rounded-2xl bg-surface px-4 py-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="d-cdek">Расчёт через СДЭК (карта ПВЗ)</Label>
+                <Switch id="d-cdek" checked={form.isCdek} onCheckedChange={(v) => setForm({ ...form, isCdek: v })} />
+              </div>
+              {form.isCdek && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Стоимость считается автоматически по тарифу СДЭК при выборе города и пункта выдачи.
+                  Поле «Цена» и «Требуется адрес» для этого способа не используются.
+                </p>
+              )}
             </div>
             <Button onClick={save} disabled={saving} className="w-full">
               {saving ? <Loader2 className="size-4 animate-spin" /> : "Сохранить"}

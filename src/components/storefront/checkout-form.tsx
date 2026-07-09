@@ -17,9 +17,14 @@ import { useCartStore } from "@/stores/cart-store";
 import { useHydrated } from "@/lib/use-hydrated";
 import { formatRub } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { CdekWidget, type CdekSelection } from "@/components/storefront/cdek-widget";
 
 const formSchema = checkoutSchema.omit({ items: true });
 type FormValues = z.infer<typeof formSchema>;
+
+// Вес по умолчанию (г) для товаров без указанного веса — только для живой оценки в виджете;
+// при создании заказа стоимость пересчитывается на сервере авторитетно.
+const DEFAULT_WEIGHT_GRAMS = 500;
 
 export type DeliveryOption = {
   id: string;
@@ -27,6 +32,7 @@ export type DeliveryOption = {
   description: string | null;
   priceKopecks: number;
   requiresAddress: boolean;
+  provider: string | null;
 };
 
 export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOption[] }) {
@@ -35,6 +41,7 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const [submitting, setSubmitting] = useState(false);
+  const [cdek, setCdek] = useState<CdekSelection | null>(null);
 
   const {
     register,
@@ -49,10 +56,26 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
 
   const selectedDeliveryId = watch("deliveryMethodId");
   const selectedDelivery = deliveryMethods.find((d) => d.id === selectedDeliveryId);
+  // Виджет СДЭК включается только при наличии ключа карт. Иначе метод «СДЭК»
+  // работает как обычный (адрес + фиксированная цена) — деплой без ключа не ломает оформление.
+  const cdekEnabled = !!process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
+  const isCdek = selectedDelivery?.provider === "CDEK" && cdekEnabled;
+
+  const cartWeightGrams = items.reduce(
+    (s, i) => s + (i.weightGrams ?? DEFAULT_WEIGHT_GRAMS) * i.quantity,
+    0
+  );
 
   const itemsTotal = items.reduce((s, i) => s + i.priceKopecks * i.quantity, 0);
-  const deliveryPrice = selectedDelivery?.priceKopecks ?? 0;
+  const deliveryPrice = isCdek
+    ? cdek?.deliverySumKopecks ?? 0
+    : selectedDelivery?.priceKopecks ?? 0;
   const total = itemsTotal + deliveryPrice;
+
+  // При смене способа доставки сбрасываем выбор пункта СДЭК
+  function handleDeliveryChange() {
+    setCdek(null);
+  }
 
   const summary = useMemo(() => items, [items]);
 
@@ -61,9 +84,24 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
       toast.error("Корзина пуста");
       return;
     }
+    if (isCdek && !cdek) {
+      toast.error("Выберите пункт выдачи или адрес на карте СДЭК");
+      return;
+    }
     setSubmitting(true);
     const result = await createOrder({
       ...values,
+      // Для СДЭК адрес — из выбора на карте; иначе — из поля формы
+      deliveryAddress: isCdek ? cdek?.address || "" : values.deliveryAddress,
+      cdek: isCdek && cdek
+        ? {
+            mode: cdek.mode,
+            tariffCode: cdek.tariffCode,
+            cityCode: cdek.cityCode,
+            pvzCode: cdek.pvzCode,
+            deliverySumKopecks: cdek.deliverySumKopecks,
+          }
+        : undefined,
       items: items.map((i) => ({
         productId: i.productId,
         variantId: i.variantId,
@@ -134,20 +172,59 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <input type="radio" value={d.id} {...register("deliveryMethodId")} className="size-4 accent-[var(--primary)]" />
+                  <input
+                    type="radio"
+                    value={d.id}
+                    {...register("deliveryMethodId", { onChange: handleDeliveryChange })}
+                    className="size-4 accent-[var(--primary)]"
+                  />
                   <div>
                     <p className="text-sm font-medium">{d.name}</p>
                     {d.description && <p className="text-xs text-muted-foreground">{d.description}</p>}
                   </div>
                 </div>
                 <span className="text-sm font-semibold">
-                  {d.priceKopecks === 0 ? "Бесплатно" : formatRub(d.priceKopecks)}
+                  {d.provider === "CDEK"
+                    ? "по тарифу"
+                    : d.priceKopecks === 0
+                      ? "Бесплатно"
+                      : formatRub(d.priceKopecks)}
                 </span>
               </label>
             ))}
           </div>
 
-          {selectedDelivery?.requiresAddress && (
+          {/* СДЭК: карта пунктов выдачи с авторасчётом стоимости */}
+          {isCdek && (
+            <div className="space-y-3">
+              <CdekWidget weightGrams={cartWeightGrams} onSelect={setCdek} />
+              {cdek ? (
+                <div className="rounded-2xl border border-primary bg-surface p-4 text-sm">
+                  <p className="font-medium">
+                    {cdek.mode === "office" ? "Пункт выдачи СДЭК" : "Курьером СДЭК"}
+                  </p>
+                  {cdek.address && (
+                    <p className="mt-0.5 text-muted-foreground">{cdek.address}</p>
+                  )}
+                  <p className="mt-1 flex justify-between font-semibold">
+                    <span>Доставка</span>
+                    <span>{formatRub(cdek.deliverySumKopecks)}</span>
+                  </p>
+                  {(cdek.periodMin || cdek.periodMax) && (
+                    <p className="text-xs text-muted-foreground">
+                      Срок: {cdek.periodMin ?? "?"}–{cdek.periodMax ?? "?"} дн.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Выберите город и пункт выдачи на карте — стоимость посчитается автоматически.
+                </p>
+              )}
+            </div>
+          )}
+
+          {!isCdek && selectedDelivery?.requiresAddress && (
             <div className="space-y-2">
               <Label htmlFor="deliveryAddress">Адрес доставки *</Label>
               <Textarea id="deliveryAddress" placeholder="Город, улица, дом, квартира, индекс" {...register("deliveryAddress")} />
@@ -187,7 +264,13 @@ export function CheckoutForm({ deliveryMethods }: { deliveryMethods: DeliveryOpt
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Доставка</span>
-              <span>{deliveryPrice === 0 ? "Бесплатно" : formatRub(deliveryPrice)}</span>
+              <span>
+                {isCdek && !cdek
+                  ? "рассчитается"
+                  : deliveryPrice === 0
+                    ? "Бесплатно"
+                    : formatRub(deliveryPrice)}
+              </span>
             </div>
             <div className="flex justify-between pt-1 text-base font-bold">
               <span>Итого</span>

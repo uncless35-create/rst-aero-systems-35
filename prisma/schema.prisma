@@ -52,6 +52,7 @@ model Product {
   badge           String? // напр. «Хит продаж», «Новинка»
   variantLabel    String? // напр. «Цвет» / «Частота»; если задан — есть варианты
   attributes      String? // JSON-строка: [{"name":"Вес","value":"32 г"}]
+  weightGrams     Int? // вес для расчёта доставки СДЭК; если пусто — берётся значение по умолчанию
   categoryId      String
   category        Category         @relation(fields: [categoryId], references: [id])
   images          ProductImage[]
@@ -95,6 +96,7 @@ model DeliveryMethod {
   priceKopecks Int     @default(0)
   isActive     Boolean @default(true)
   requiresAddress Boolean @default(true) // самовывоз — false
+  provider     String? // null = фиксированная цена; "CDEK" = расчёт через виджет СДЭК
   sortOrder    Int     @default(0)
   orders       Order[]
 }
@@ -110,6 +112,9 @@ model Order {
   deliveryMethodId     String
   deliveryMethod       DeliveryMethod @relation(fields: [deliveryMethodId], references: [id])
   deliveryAddress      String?
+  cdekPvzCode          String? // код выбранного пункта выдачи СДЭК (если доставка в ПВЗ)
+  cdekCityCode         Int? // код города СДЭК получателя
+  cdekTariffCode       Int? // код тарифа СДЭК, по которому рассчитана доставка
   comment              String?
   itemsTotalKopecks    Int
   deliveryPriceKopecks Int

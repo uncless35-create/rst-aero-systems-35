@@ -21,6 +21,15 @@ export const checkoutSchema = z.object({
     .or(z.literal("")),
   deliveryMethodId: z.string().min(1, "Выберите способ доставки"),
   deliveryAddress: z.string().trim().max(500).optional().or(z.literal("")),
+  cdek: z
+    .object({
+      mode: z.enum(["office", "door"]),
+      tariffCode: z.number().int(),
+      cityCode: z.number().int().nullable(),
+      pvzCode: z.string().max(50).nullable(),
+      deliverySumKopecks: z.number().int().min(0).max(10_000_000),
+    })
+    .optional(),
   comment: z.string().trim().max(1000).optional().or(z.literal("")),
   items: z.array(checkoutItemSchema).min(1, "Корзина пуста"),
 });

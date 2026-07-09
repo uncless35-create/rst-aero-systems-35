@@ -18,6 +18,7 @@ export default async function AdminDeliveryPage() {
           priceKopecks: m.priceKopecks,
           isActive: m.isActive,
           requiresAddress: m.requiresAddress,
+          provider: m.provider,
           sortOrder: m.sortOrder,
         }))}
       />

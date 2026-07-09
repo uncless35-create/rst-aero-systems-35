@@ -18,6 +18,7 @@ export default async function CheckoutPage() {
             description: d.description,
             priceKopecks: d.priceKopecks,
             requiresAddress: d.requiresAddress,
+            provider: d.provider,
           }))}
         />
       </div>

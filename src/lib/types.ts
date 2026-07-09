@@ -25,6 +25,7 @@ export type CartItem = {
   priceKopecks: number;
   quantity: number;
   maxStock: number;
+  weightGrams: number | null;
 };
 
 export type FavoriteItem = {

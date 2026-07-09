@@ -27,6 +27,7 @@ export type ProductFormInitial = {
   priceRub: number;
   oldPriceRub: number | null;
   stockQty: number;
+  weightGrams: number | null;
   isActive: boolean;
   isFeatured: boolean;
   badge: string;
@@ -55,6 +56,9 @@ export function ProductForm({
     initial?.oldPriceRub ? String(initial.oldPriceRub) : ""
   );
   const [stockQty, setStockQty] = useState<number>(initial?.stockQty ?? 0);
+  const [weightGrams, setWeightGrams] = useState<string>(
+    initial?.weightGrams != null ? String(initial.weightGrams) : ""
+  );
   const [badge, setBadge] = useState(initial?.badge ?? "");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
   const [isFeatured, setIsFeatured] = useState(initial?.isFeatured ?? false);
@@ -77,6 +81,7 @@ export function ProductForm({
       priceKopecks: rublesToKopecks(priceRub),
       oldPriceKopecks: oldPriceRub ? rublesToKopecks(oldPriceRub) : null,
       stockQty,
+      weightGrams: weightGrams.trim() === "" ? null : Number(weightGrams),
       isActive,
       isFeatured,
       badge,
@@ -212,6 +217,11 @@ export function ProductForm({
             <Label htmlFor="p-stock">Остаток, шт</Label>
             <Input id="p-stock" type="number" min={0} value={stockQty} onChange={(e) => setStockQty(Number(e.target.value))} />
             <p className="text-xs text-muted-foreground">Если есть варианты, учитывается остаток вариантов.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-weight">Вес, г (для расчёта доставки СДЭК)</Label>
+            <Input id="p-weight" type="number" min={0} placeholder="напр. 300" value={weightGrams} onChange={(e) => setWeightGrams(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Вес с упаковкой. Если пусто — берётся значение по умолчанию.</p>
           </div>
         </section>
 

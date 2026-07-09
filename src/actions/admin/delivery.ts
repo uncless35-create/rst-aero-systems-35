@@ -11,6 +11,7 @@ const schema = z.object({
   priceKopecks: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
   requiresAddress: z.boolean().default(true),
+  provider: z.string().trim().nullable().optional(),
   sortOrder: z.coerce.number().int().default(0),
 });
 
