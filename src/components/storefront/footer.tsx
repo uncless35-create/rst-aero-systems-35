@@ -19,6 +19,7 @@ export function Footer() {
           <p className="font-medium">Информация</p>
           <Link href="/about" className="block text-muted-foreground hover:text-foreground">О компании</Link>
           <Link href="/delivery-payment" className="block text-muted-foreground hover:text-foreground">Доставка и оплата</Link>
+          <Link href="/warranty" className="block text-muted-foreground hover:text-foreground">Гарантия и возврат</Link>
           <Link href="/contacts" className="block text-muted-foreground hover:text-foreground">Контакты</Link>
           <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Политика конфиденциальности</Link>
         </div>
