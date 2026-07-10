@@ -281,6 +281,12 @@ const PRICES: Record<string, number> = {
   "gnb-2s-550mah-xt30": 820,
   "betafpv-1s-6-port-charger": 1445,
   "betafpv-meteor-75-pro-o4-elrs": 8490, // Meteor75 Pro O4 (PNP, без юнита)
+  // --- Air65/Air75 II + RadioMaster Nomad ---
+  "air65-ii-brushless-whoop-quadcopter-racing-1080x": 9750,
+  "air65-ii-brushless-whoop-quadcopter-freestyle-1080x": 9750,
+  "air75-ii-brushless-whoop-quadcopter-racing-1080x": 9855,
+  "air75-ii-brushless-whoop-quadcopter-freestyle-1080x": 9855,
+  "radiomaster-nomad": 6290,
 };
 
 // Соответствие: папка (trim) → категория
@@ -311,9 +317,9 @@ async function main() {
 
   // --- Способы доставки ---
   const deliveries = [
-    { name: "Самовывоз", description: "Из пункта выдачи в вашем городе", priceKopecks: 0, requiresAddress: false, provider: null, sortOrder: 0 },
-    { name: "СДЭК", description: "Пункт выдачи или курьер — стоимость по тарифу", priceKopecks: 35000, requiresAddress: true, provider: "CDEK", sortOrder: 1 },
-    { name: "Почта России", description: "Доставка в любое отделение", priceKopecks: 25000, requiresAddress: true, provider: null, sortOrder: 2 },
+    { name: "Самовывоз", description: "Со склада в Новороссийске", priceKopecks: 0, requiresAddress: false, provider: null, isActive: true, sortOrder: 0 },
+    { name: "СДЭК", description: "Пункт выдачи или курьер — стоимость по тарифу", priceKopecks: 35000, requiresAddress: true, provider: "CDEK", isActive: true, sortOrder: 1 },
+    { name: "Почта России", description: "Доставка в любое отделение", priceKopecks: 25000, requiresAddress: true, provider: null, isActive: false, sortOrder: 2 },
   ];
   for (const d of deliveries) {
     const existing = await prisma.deliveryMethod.findFirst({ where: { name: d.name } });
@@ -325,7 +331,7 @@ async function main() {
   // --- Инфостраницы ---
   const pages = [
     { key: "about", title: "О компании", body: "RST AERO SYSTEMS — магазин FPV-дронов, тинивупов, синивупов, запчастей и аппаратуры. Мы подбираем проверенное оборудование для пилотов любого уровня. Отправляем заказы по всей России." },
-    { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка: самовывоз, СДЭК и Почта России. Оплата онлайн картой или через СБП. После оформления заказа вы будете перенаправлены на защищённую страницу оплаты ЮKassa." },
+    { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка: самовывоз со склада в Новороссийске и СДЭК (пункт выдачи или курьер, стоимость рассчитывается по тарифу при оформлении). Оплата онлайн картой или через СБП. После оформления заказа вы будете перенаправлены на защищённую страницу оплаты ЮKassa." },
     { key: "contacts", title: "Контакты", body: "Телефон: +7 (900) 000-00-00\nПочта: info@rst-aero.ru\nМы на связи ежедневно с 10:00 до 20:00 по МСК." },
   ];
   for (const p of pages) await prisma.siteContent.upsert({ where: { key: p.key }, update: p, create: p });
