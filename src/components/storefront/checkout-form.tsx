@@ -95,11 +95,21 @@ export function CheckoutForm({
       toast.error("Выберите пункт выдачи или адрес на карте СДЭК");
       return;
     }
+    // Для СДЭК собираем читаемый адрес: город + адрес ПВЗ/двери (+ код ПВЗ)
+    let cdekAddress = "";
+    if (cdek) {
+      const parts: string[] = [];
+      if (cdek.cityName && !cdek.address.includes(cdek.cityName)) parts.push(cdek.cityName);
+      if (cdek.address) parts.push(cdek.address);
+      cdekAddress = parts.join(", ");
+      if (cdek.mode === "office" && cdek.pvzCode) cdekAddress += ` (ПВЗ ${cdek.pvzCode})`;
+    }
+
     setSubmitting(true);
     const result = await createOrder({
       ...values,
-      // Для СДЭК адрес — из выбора на карте; иначе — из поля формы
-      deliveryAddress: isCdek ? cdek?.address || "" : values.deliveryAddress,
+      // Для СДЭК адрес — из выбора на карте (с городом); иначе — из поля формы
+      deliveryAddress: isCdek ? cdekAddress : values.deliveryAddress,
       cdek: isCdek && cdek
         ? {
             mode: cdek.mode,
