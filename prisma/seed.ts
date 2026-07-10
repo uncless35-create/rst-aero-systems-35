@@ -236,10 +236,10 @@ const META: Record<string, Meta> = {
     attributes: [["Класс", "75 мм (whoop)"], ["Питание", "1S"], ["Тип", "Бесколлекторный"], ["Версия", "Freestyle"]],
   },
   "radiomaster-nomad": {
-    slug: "apparatura-radiomaster-nomad",
-    name: "Аппаратура RadioMaster Nomad",
-    description: "Аппаратура управления RadioMaster Nomad с модулем ELRS 2.4 ГГц.",
-    attributes: [["Протокол", "ELRS"], ["Диапазон", "2.4 ГГц"]],
+    slug: "vch-modul-radiomaster-nomad-elrs-gemini",
+    name: "ВЧ-модуль RadioMaster Nomad (ELRS, Gemini 2.4+915)",
+    description: "Внешний модуль дальней связи RadioMaster Nomad на ExpressLRS. Поддерживает технологию Gemini и работает одновременно на двух диапазонах — 2.4 ГГц и 915 МГц — для максимально надёжного и дальнобойного линка.",
+    attributes: [["Тип", "Внешний ВЧ-модуль (TX)"], ["Протокол", "ExpressLRS (ELRS)"], ["Диапазоны", "2.4 ГГц + 915 МГц"], ["Технология", "Gemini (двухдиапазонная)"]],
   },
 };
 
