@@ -125,6 +125,7 @@ model Order {
   status               String      @default("NEW") // NEW|PAID|PROCESSING|SHIPPED|COMPLETED|CANCELLED
   paymentStatus        String      @default("PENDING") // PENDING|WAITING_FOR_CAPTURE|SUCCEEDED|CANCELLED
   yookassaPaymentId    String?     @unique
+  tbankPaymentId       String?     @unique // id платежа в Т-Банке (интернет-эквайринг)
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt

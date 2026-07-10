@@ -34,7 +34,7 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
 
   const paid = order.paymentStatus === "SUCCEEDED";
   const pollable =
-    Boolean(order.yookassaPaymentId) &&
+    Boolean(order.yookassaPaymentId || order.tbankPaymentId) &&
     order.paymentStatus !== "SUCCEEDED" &&
     order.paymentStatus !== "CANCELLED";
 

@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isYookassaConfigured, createPayment } from "@/lib/yookassa";
+import { isTbankConfigured, createTbankPayment } from "@/lib/tbank";
 import { calculateTariff, CDEK_DEFAULT_WEIGHT_GRAMS } from "@/lib/cdek";
 import { sendTelegram, escapeHtml } from "@/lib/telegram";
 import { formatRub } from "@/lib/money";
@@ -200,15 +201,47 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
     (data.comment ? `\n\n💬 ${escapeHtml(data.comment)}` : "");
   await sendTelegram(tgMessage);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const returnUrl = `${siteUrl}/order/${order.orderNumber}/success`;
+
+  // Оплата Т-Банком (приоритетно, если настроен интернет-эквайринг).
+  if (isTbankConfigured()) {
+    try {
+      const { paymentId, paymentUrl } = await createTbankPayment({
+        amountKopecks: totalKopecks,
+        orderId: order.id,
+        description: `Заказ №${order.orderNumber}`,
+        successUrl: returnUrl,
+        failUrl: returnUrl,
+        notificationUrl: `${siteUrl}/api/webhooks/tbank`,
+        customerEmail: data.customerEmail || null,
+        customerPhone: data.customerPhone,
+        items: orderItems.map((i) => ({
+          name: i.variantName ? `${i.productName} (${i.variantName})` : i.productName,
+          priceKopecks: i.priceKopecks,
+          quantity: i.quantity,
+        })),
+        deliveryKopecks: deliveryPriceKopecks,
+      });
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { tbankPaymentId: paymentId },
+      });
+      return { ok: true, orderNumber: order.orderNumber, confirmationUrl: paymentUrl };
+    } catch (e) {
+      console.error("Ошибка создания платежа Т-Банк:", e);
+      return { ok: true, orderNumber: order.orderNumber };
+    }
+  }
+
   // Оплата ЮKassa (если настроена). Иначе — заказ без онлайн-оплаты.
   if (isYookassaConfigured()) {
     try {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
       const payment = await createPayment({
         amountKopecks: totalKopecks,
         description: `Заказ №${order.orderNumber}`,
         orderId: order.id,
-        returnUrl: `${siteUrl}/order/${order.orderNumber}/success`,
+        returnUrl,
         idempotenceKey: order.id,
       });
       await prisma.order.update({
