@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PaymentPoller } from "@/components/storefront/payment-poller";
+import { getTbankState, mapTbankStatus } from "@/lib/tbank";
 import { formatRub } from "@/lib/money";
 import {
   ORDER_STATUS_LABELS,
@@ -31,6 +32,33 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
     include: { items: true, deliveryMethod: true },
   });
   if (!order) notFound();
+
+  // Подстраховка: перепроверяем статус напрямую у Т-Банка (на случай, если вебхук не дошёл)
+  if (
+    order.tbankPaymentId &&
+    order.paymentStatus !== "SUCCEEDED" &&
+    order.paymentStatus !== "CANCELLED"
+  ) {
+    try {
+      const status = await getTbankState(order.tbankPaymentId);
+      if (status) {
+        const mapped = mapTbankStatus(status);
+        if (mapped.paymentStatus !== order.paymentStatus) {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: {
+              paymentStatus: mapped.paymentStatus,
+              ...(mapped.orderStatus ? { status: mapped.orderStatus } : {}),
+            },
+          });
+          order.paymentStatus = mapped.paymentStatus;
+          if (mapped.orderStatus) order.status = mapped.orderStatus;
+        }
+      }
+    } catch {
+      // не критично — статус подтянется вебхуком или при следующем обновлении
+    }
+  }
 
   const paid = order.paymentStatus === "SUCCEEDED";
   const pollable =
