@@ -27,8 +27,11 @@ export function toCardData(p: ProductWithCard): ProductCardData {
     badge: p.badge,
     image: p.images[0]?.url ?? null,
     categoryName: p.category?.name,
-    inStock: p.stockQty > 0 || p.variants.some((v) => v.stockQty > 0),
+    inStock: !p.outOfStock && (p.stockQty > 0 || p.variants.some((v) => v.stockQty > 0)),
+    outOfStock: p.outOfStock,
     hasVariants: p.variants.length > 0,
+    stockQty: p.stockQty,
+    weightGrams: p.weightGrams,
   };
 }
 

@@ -24,6 +24,7 @@ export type PurchaseProduct = {
   priceKopecks: number;
   oldPriceKopecks: number | null;
   stockQty: number;
+  outOfStock: boolean;
   variantLabel: string | null;
   image: string | null;
   weightGrams: number | null;
@@ -45,9 +46,14 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
   const effectivePrice = selectedVariant?.priceKopecks ?? product.priceKopecks;
   const maxStock = hasVariants ? (selectedVariant?.stockQty ?? 0) : product.stockQty;
   const inStock = maxStock > 0;
+  const available = inStock && !product.outOfStock; // можно ли купить
   const needsVariant = hasVariants && !selectedVariant;
 
   function handleAdd() {
+    if (product.outOfStock) {
+      toast.error("Товара временно нет в наличии");
+      return;
+    }
     if (needsVariant) {
       toast.error(`Выберите: ${product.variantLabel ?? "вариант"}`);
       return;
@@ -118,7 +124,7 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
           <span className="w-8 text-center text-sm font-semibold">{qty}</span>
           <button
             onClick={() => setQty((q) => Math.min(maxStock || 1, q + 1))}
-            disabled={!inStock || qty >= maxStock}
+            disabled={!available || qty >= maxStock}
             aria-label="Больше"
             className="grid size-11 place-items-center rounded-full transition-colors hover:bg-surface-2 disabled:opacity-40"
           >
@@ -127,7 +133,9 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
         </div>
 
         <span className="text-sm text-muted-foreground">
-          {inStock ? (
+          {product.outOfStock ? (
+            <span className="text-amber-600">Временно нет в наличии</span>
+          ) : inStock ? (
             <span className="text-success">В наличии{!hasVariants && maxStock <= 5 ? ` · ${maxStock} шт` : ""}</span>
           ) : (
             "Нет в наличии"
@@ -140,11 +148,17 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={handleAdd}
-          disabled={!inStock}
+          disabled={!available}
           className={cn(buttonVariants({ size: "lg" }), "flex-1")}
         >
           {added ? <Check className="size-5" /> : <ShoppingBag className="size-5" />}
-          {added ? "В корзине" : inStock ? "В корзину" : "Нет в наличии"}
+          {added
+            ? "В корзине"
+            : product.outOfStock
+              ? "Временно нет"
+              : inStock
+                ? "В корзину"
+                : "Нет в наличии"}
         </motion.button>
         <Button
           size="lg"
@@ -153,7 +167,7 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
             handleAdd();
             router.push("/cart");
           }}
-          disabled={!inStock}
+          disabled={!available}
         >
           Купить
         </Button>

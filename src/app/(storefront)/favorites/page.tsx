@@ -22,7 +22,11 @@ export default function FavoritesPage() {
     badge: f.badge,
     image: f.image,
     inStock: f.inStock,
+    outOfStock: false,
     hasVariants: f.hasVariants,
+    // Реальные остатки/вес в избранном неизвестны — сервер проверит при заказе
+    stockQty: f.inStock ? 99 : 0,
+    weightGrams: null,
   }));
 
   return (

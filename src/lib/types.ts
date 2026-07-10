@@ -10,7 +10,10 @@ export type ProductCardData = {
   image: string | null;
   categoryName?: string;
   inStock: boolean;
+  outOfStock: boolean; // «Временно нет в наличии» — флаг, товар виден, но купить нельзя
   hasVariants: boolean;
+  stockQty: number; // для быстрого добавления в корзину с карточки (товары без вариантов)
+  weightGrams: number | null;
 };
 
 export type CartItem = {

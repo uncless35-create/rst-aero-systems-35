@@ -44,6 +44,7 @@ export default async function EditProductPage({ params }: { params: Params }) {
           stockQty: product.stockQty,
           weightGrams: product.weightGrams,
           isActive: product.isActive,
+          outOfStock: product.outOfStock,
           isFeatured: product.isFeatured,
           badge: product.badge ?? "",
           variantLabel: product.variantLabel ?? "",

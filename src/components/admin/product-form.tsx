@@ -29,6 +29,7 @@ export type ProductFormInitial = {
   stockQty: number;
   weightGrams: number | null;
   isActive: boolean;
+  outOfStock: boolean;
   isFeatured: boolean;
   badge: string;
   variantLabel: string;
@@ -61,6 +62,7 @@ export function ProductForm({
   );
   const [badge, setBadge] = useState(initial?.badge ?? "");
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  const [outOfStock, setOutOfStock] = useState(initial?.outOfStock ?? false);
   const [isFeatured, setIsFeatured] = useState(initial?.isFeatured ?? false);
   const [variantLabel, setVariantLabel] = useState(initial?.variantLabel ?? "");
   const [attributes, setAttributes] = useState<AttrForm[]>(initial?.attributes ?? []);
@@ -83,6 +85,7 @@ export function ProductForm({
       stockQty,
       weightGrams: weightGrams.trim() === "" ? null : Number(weightGrams),
       isActive,
+      outOfStock,
       isFeatured,
       badge,
       variantLabel,
@@ -247,6 +250,13 @@ export function ProductForm({
           <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
             <Label htmlFor="p-active">Активен (в продаже)</Label>
             <Switch id="p-active" checked={isActive} onCheckedChange={setIsActive} />
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
+            <div>
+              <Label htmlFor="p-oos">Временно нет в наличии</Label>
+              <p className="text-xs text-muted-foreground">Товар остаётся виден, но купить нельзя</p>
+            </div>
+            <Switch id="p-oos" checked={outOfStock} onCheckedChange={setOutOfStock} />
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
             <Label htmlFor="p-featured">В «Хиты» на главной</Label>

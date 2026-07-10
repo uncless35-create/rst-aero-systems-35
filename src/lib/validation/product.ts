@@ -28,6 +28,7 @@ export const productSchema = z.object({
   stockQty: z.coerce.number().int().min(0).default(0),
   weightGrams: z.coerce.number().int().min(0).max(1_000_000).nullable().optional(),
   isActive: z.boolean().default(true),
+  outOfStock: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   badge: z.string().trim().optional().nullable(),
   variantLabel: z.string().trim().optional().nullable(),

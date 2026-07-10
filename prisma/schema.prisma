@@ -48,6 +48,7 @@ model Product {
   oldPriceKopecks Int?
   stockQty        Int              @default(0)
   isActive        Boolean          @default(true)
+  outOfStock      Boolean          @default(false) // «Временно нет в наличии» — товар виден, но купить нельзя
   isFeatured      Boolean          @default(false) // показывать в «Хиты» на главной
   badge           String? // напр. «Хит продаж», «Новинка»
   variantLabel    String? // напр. «Цвет» / «Частота»; если задан — есть варианты

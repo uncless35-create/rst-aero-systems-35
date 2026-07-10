@@ -84,6 +84,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 priceKopecks: product.priceKopecks,
                 oldPriceKopecks: product.oldPriceKopecks,
                 stockQty: product.stockQty,
+                outOfStock: product.outOfStock,
                 variantLabel: product.variantLabel,
                 image: firstImage,
                 weightGrams: product.weightGrams,

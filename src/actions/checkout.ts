@@ -61,6 +61,9 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
   for (const item of data.items) {
     const product = productMap.get(item.productId);
     if (!product) return { ok: false, error: "Товар недоступен" };
+    if (product.outOfStock) {
+      return { ok: false, error: `Товара «${product.name}» временно нет в наличии` };
+    }
 
     totalWeightGrams += (product.weightGrams ?? CDEK_DEFAULT_WEIGHT_GRAMS) * item.quantity;
 
