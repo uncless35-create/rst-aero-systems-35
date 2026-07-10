@@ -293,7 +293,7 @@ const PRICES: Record<string, number> = {
 const CATEGORY_MAP: Record<string, { name: string; slug: string; description: string; sortOrder: number; featured?: boolean }> = {
   "Дроны": { name: "Дроны", slug: "drony", description: "Готовые FPV-дроны", sortOrder: 0, featured: true },
   "тинивупы": { name: "Тинивупы", slug: "tinivupy", description: "Микро-дроны для полётов в помещении", sortOrder: 1, featured: true },
-  "Синевупы": { name: "Синивупы", slug: "sinivupy", description: "Cinewhoop для съёмки", sortOrder: 2, featured: true },
+  "Синевупы": { name: "Синевупы", slug: "sinivupy", description: "Cinewhoop для съёмки", sortOrder: 2, featured: true },
   "Аппаратуры управления и передатчики": { name: "Аппаратура управления и передатчики", slug: "apparatura", description: "Пульты и передатчики", sortOrder: 3 },
   "Очки и шлема": { name: "Очки и шлемы", slug: "ochki-i-shlemy", description: "FPV-очки и шлемы", sortOrder: 4 },
   "Аккамуляторы и зарядные устройства": { name: "Аккумуляторы и зарядные устройства", slug: "akkumulyatory", description: "Аккумуляторы и зарядки", sortOrder: 5 },
@@ -330,7 +330,7 @@ async function main() {
 
   // --- Инфостраницы ---
   const pages = [
-    { key: "about", title: "О компании", body: "RST AERO SYSTEMS — магазин FPV-дронов, тинивупов, синивупов, запчастей и аппаратуры. Мы подбираем проверенное оборудование для пилотов любого уровня. Отправляем заказы по всей России." },
+    { key: "about", title: "О компании", body: "RST AERO SYSTEMS — магазин FPV-дронов, тинивупов, синевупов, запчастей и аппаратуры. Мы подбираем проверенное оборудование для пилотов любого уровня. Отправляем заказы по всей России." },
     { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка: самовывоз со склада в Новороссийске и СДЭК (пункт выдачи или курьер, стоимость рассчитывается по тарифу при оформлении). Оплата онлайн картой или через СБП. После оформления заказа вы будете перенаправлены на защищённую страницу оплаты ЮKassa." },
     { key: "contacts", title: "Контакты", body: "Телефон: +7 (900) 000-00-00\nПочта: info@rst-aero.ru\nМы на связи ежедневно с 10:00 до 20:00 по МСК." },
   ];
