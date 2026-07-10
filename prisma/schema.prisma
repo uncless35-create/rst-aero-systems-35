@@ -116,6 +116,8 @@ model Order {
   cdekPvzCode          String? // код выбранного пункта выдачи СДЭК (если доставка в ПВЗ)
   cdekCityCode         Int? // код города СДЭК получателя
   cdekTariffCode       Int? // код тарифа СДЭК, по которому рассчитана доставка
+  cdekOrderUuid        String? // UUID заказа-отправления в системе СДЭК (после создания)
+  cdekTrackNumber      String? // номер накладной СДЭК для отслеживания
   comment              String?
   itemsTotalKopecks    Int
   deliveryPriceKopecks Int

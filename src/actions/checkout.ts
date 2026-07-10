@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isYookassaConfigured, createPayment } from "@/lib/yookassa";
 import { calculateTariff, CDEK_DEFAULT_WEIGHT_GRAMS } from "@/lib/cdek";
+import { sendTelegram, escapeHtml } from "@/lib/telegram";
+import { formatRub } from "@/lib/money";
 import { checkoutSchema, type CheckoutInput } from "@/lib/validation/checkout";
 
 export type CreateOrderResult =
@@ -177,6 +179,26 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
 
   // Остатки изменились — сбрасываем кеш витрины
   revalidateTag("products", "max");
+
+  // Уведомление владельцу в Telegram (если настроено) — не блокирует оформление
+  const itemsList = orderItems
+    .map(
+      (i) =>
+        `• ${escapeHtml(i.productName)}${i.variantName ? ` (${escapeHtml(i.variantName)})` : ""} × ${i.quantity} — ${formatRub(i.priceKopecks * i.quantity)}`,
+    )
+    .join("\n");
+  const tgMessage =
+    `🛒 <b>Новый заказ №${order.orderNumber}</b>\n\n` +
+    `👤 ${escapeHtml(data.customerName)}\n` +
+    `📞 ${escapeHtml(data.customerPhone)}\n` +
+    (data.customerEmail ? `✉️ ${escapeHtml(data.customerEmail)}\n` : "") +
+    `\n📦 <b>Состав:</b>\n${itemsList}\n` +
+    `\n🚚 <b>${escapeHtml(delivery.name)}</b>` +
+    (data.deliveryAddress ? `\n📍 ${escapeHtml(data.deliveryAddress)}` : "") +
+    ` — ${deliveryPriceKopecks === 0 ? "бесплатно" : formatRub(deliveryPriceKopecks)}\n` +
+    `\n💰 <b>Итого: ${formatRub(totalKopecks)}</b>` +
+    (data.comment ? `\n\n💬 ${escapeHtml(data.comment)}` : "");
+  await sendTelegram(tgMessage);
 
   // Оплата ЮKassa (если настроена). Иначе — заказ без онлайн-оплаты.
   if (isYookassaConfigured()) {

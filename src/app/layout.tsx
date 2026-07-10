@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { YandexMetrica } from "@/components/analytics/yandex-metrica";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground">
         {children}
         <Toaster position="top-center" richColors />
+        <YandexMetrica />
       </body>
     </html>
   );

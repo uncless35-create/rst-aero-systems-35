@@ -18,6 +18,17 @@ export const CDEK_FROM_CITY_CODE = Number(process.env.CDEK_FROM_CITY_CODE ?? 44)
 /** Вес по умолчанию (г) для товаров без указанного веса. */
 export const CDEK_DEFAULT_WEIGHT_GRAMS = Number(process.env.CDEK_DEFAULT_WEIGHT_GRAMS ?? 500);
 
+// --- Отправитель (для создания накладной) ---
+const SENDER_NAME = process.env.CDEK_SENDER_NAME ?? "";
+const SENDER_PHONE = process.env.CDEK_SENDER_PHONE ?? "";
+/** Код ПВЗ СДЭК, куда отправитель сдаёт посылки (shipment_point). */
+const SHIPMENT_POINT = process.env.CDEK_SHIPMENT_POINT ?? "";
+
+/** Настроен ли отправитель для создания накладных СДЭК. */
+export function isCdekShipmentConfigured(): boolean {
+  return !!SENDER_NAME && !!SENDER_PHONE && !!SHIPMENT_POINT;
+}
+
 /**
  * Настроен ли боевой СДЭК. Опираемся на несекретный CDEK_API_URL (боевой домен),
  * т.к. эта проверка вызывается и при сборке, куда Sensitive-секреты могут не попадать.
@@ -123,5 +134,95 @@ export async function calculateTariff(params: {
     deliverySumKopecks: Math.round(data.delivery_sum * 100),
     periodMin: data.period_min ?? null,
     periodMax: data.period_max ?? null,
+  };
+}
+
+export type CdekShipmentItem = {
+  name: string;
+  wareKey: string; // артикул/идентификатор товара
+  costRub: number; // объявленная стоимость, руб
+  weightGrams: number;
+  amount: number;
+};
+
+/**
+ * Создать заказ-отправление (накладную) в СДЭК: POST /v2/orders.
+ * Возвращает UUID заказа. Номер накладной (cdek_number) появляется асинхронно —
+ * получить его можно через getCdekOrderInfo(uuid).
+ */
+export async function createCdekShipment(params: {
+  tariffCode: number;
+  toCityCode: number;
+  pvzCode: string | null; // для доставки в ПВЗ (office)
+  toAddress: string | null; // для доставки курьером (door)
+  recipientName: string;
+  recipientPhone: string;
+  items: CdekShipmentItem[];
+}): Promise<{ uuid: string }> {
+  const totalWeight = params.items.reduce(
+    (s, i) => s + Math.max(1, Math.round(i.weightGrams)) * i.amount,
+    0,
+  );
+
+  const body: Record<string, unknown> = {
+    type: 1, // интернет-магазин
+    tariff_code: params.tariffCode,
+    shipment_point: SHIPMENT_POINT,
+    sender: { name: SENDER_NAME, phones: [{ number: SENDER_PHONE }] },
+    recipient: {
+      name: params.recipientName,
+      phones: [{ number: params.recipientPhone }],
+    },
+    packages: [
+      {
+        number: "1",
+        weight: Math.max(1, totalWeight),
+        items: params.items.map((i, idx) => ({
+          name: i.name.slice(0, 255),
+          ware_key: (i.wareKey || `item-${idx + 1}`).slice(0, 50),
+          payment: { value: 0 }, // предоплата — наложенного платежа нет
+          cost: Math.max(0, Math.round(i.costRub)),
+          weight: Math.max(1, Math.round(i.weightGrams)),
+          amount: Math.max(1, i.amount),
+        })),
+      },
+    ],
+  };
+
+  // ПВЗ или курьер
+  if (params.pvzCode) {
+    body.delivery_point = params.pvzCode;
+  } else {
+    body.to_location = {
+      code: params.toCityCode,
+      address: params.toAddress || "—",
+    };
+  }
+
+  const res = await cdekFetch("orders", { method: "POST", json: body });
+  const data = (await res.json()) as {
+    entity?: { uuid?: string };
+    requests?: { state?: string; errors?: { code: string; message: string }[] }[];
+  };
+  const uuid = data.entity?.uuid;
+  if (!uuid) {
+    const err = data.requests?.[0]?.errors?.[0]?.message ?? "неизвестная ошибка";
+    throw new Error(`СДЭК: не удалось создать отправление — ${err}`);
+  }
+  return { uuid };
+}
+
+/** Информация о заказе-отправлении СДЭК: номер накладной и статус. */
+export async function getCdekOrderInfo(
+  uuid: string,
+): Promise<{ cdekNumber: string | null; status: string | null }> {
+  const res = await cdekFetch(`orders/${uuid}`, { method: "GET" });
+  if (!res.ok) return { cdekNumber: null, status: null };
+  const data = (await res.json()) as {
+    entity?: { cdek_number?: string; statuses?: { name?: string }[] };
+  };
+  return {
+    cdekNumber: data.entity?.cdek_number ?? null,
+    status: data.entity?.statuses?.[0]?.name ?? null,
   };
 }
