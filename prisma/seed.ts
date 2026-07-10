@@ -241,6 +241,25 @@ const META: Record<string, Meta> = {
     description: "Внешний модуль дальней связи RadioMaster Nomad на ExpressLRS. Поддерживает технологию Gemini и работает одновременно на двух диапазонах — 2.4 ГГц и 915 МГц — для максимально надёжного и дальнобойного линка.",
     attributes: [["Тип", "Внешний ВЧ-модуль (TX)"], ["Протокол", "ExpressLRS (ELRS)"], ["Диапазоны", "2.4 ГГц + 915 МГц"], ["Технология", "Gemini (двухдиапазонная)"]],
   },
+  // --- Готовые наборы для полёта (описания уточним по составу) ---
+  "fpv-komplekt-dlya-novichka-na-cifre-dji-o4-pod-klyuch": {
+    slug: "nabor-fpv-novichok-cifra-dji-o4",
+    name: "FPV-комплект для новичка «Цифра DJI O4» под ключ",
+    description: "Готовый FPV-комплект для новичка с цифровой видеосистемой DJI O4. Всё для старта «под ключ»: собрано, настроено и готово к полёту.",
+    attributes: [["Уровень", "Для новичка"], ["Видеосистема", "Цифровая (DJI O4)"], ["Готовность", "Под ключ"]],
+  },
+  "gotovyy-fpv-komplekt-dlya-novichka-dron-ochki-pult": {
+    slug: "nabor-fpv-novichok-dron-ochki-pult",
+    name: "Готовый FPV-комплект для новичка: дрон, очки, пульт",
+    description: "Готовый FPV-комплект для новичка: дрон, очки и пульт в одном наборе — берёте и летаете.",
+    attributes: [["Уровень", "Для новичка"], ["Комплект", "Дрон + очки + пульт"]],
+  },
+  "komplekt-dlya-starta-v-fpv": {
+    slug: "nabor-start-fpv",
+    name: "Комплект для старта в FPV",
+    description: "Стартовый FPV-комплект — базовый набор, чтобы начать летать без лишних затрат.",
+    attributes: [["Уровень", "Стартовый"]],
+  },
 };
 
 // Цены (руб) по slug товара. 0/нет — цена не задана.
@@ -291,15 +310,16 @@ const PRICES: Record<string, number> = {
 
 // Соответствие: папка (trim) → категория
 const CATEGORY_MAP: Record<string, { name: string; slug: string; description: string; sortOrder: number; featured?: boolean }> = {
-  "Дроны": { name: "Дроны", slug: "drony", description: "Готовые FPV-дроны", sortOrder: 0, featured: true },
-  "тинивупы": { name: "Тинивупы", slug: "tinivupy", description: "Микро-дроны для полётов в помещении", sortOrder: 1, featured: true },
-  "Синевупы": { name: "Синевупы", slug: "sinivupy", description: "Cinewhoop для съёмки", sortOrder: 2, featured: true },
-  "Аппаратуры управления и передатчики": { name: "Аппаратура управления и передатчики", slug: "apparatura", description: "Пульты и передатчики", sortOrder: 3 },
-  "Очки и шлема": { name: "Очки и шлемы", slug: "ochki-i-shlemy", description: "FPV-очки и шлемы", sortOrder: 4 },
-  "Аккамуляторы и зарядные устройства": { name: "Аккумуляторы и зарядные устройства", slug: "akkumulyatory", description: "Аккумуляторы и зарядки", sortOrder: 5 },
-  "Полетные контроллеры и стеки": { name: "Полётные контроллеры и стеки", slug: "poletnye-kontrollery-i-steki", description: "Полётные контроллеры, стеки, ESC", sortOrder: 6 },
-  "Камеры, VTX, юниты и антенны": { name: "Камеры, VTX и антенны", slug: "kamery-vtx-antenny", description: "FPV-камеры, видеопередатчики, цифровые юниты и антенны", sortOrder: 7 },
-  "GPS": { name: "GPS-модули", slug: "gps", description: "GPS-модули и компасы", sortOrder: 8 },
+  "Готовые наборы для полета": { name: "Готовые наборы для полета", slug: "gotovye-nabory", description: "Готовые FPV-комплекты под ключ — собрано, настроено, готово к полёту", sortOrder: 0, featured: true },
+  "Дроны": { name: "Дроны", slug: "drony", description: "Готовые FPV-дроны", sortOrder: 1, featured: true },
+  "тинивупы": { name: "Тинивупы", slug: "tinivupy", description: "Микро-дроны для полётов в помещении", sortOrder: 2, featured: true },
+  "Синевупы": { name: "Синевупы", slug: "sinivupy", description: "Cinewhoop для съёмки", sortOrder: 3, featured: true },
+  "Аппаратуры управления и передатчики": { name: "Аппаратура управления и передатчики", slug: "apparatura", description: "Пульты и передатчики", sortOrder: 4 },
+  "Очки и шлема": { name: "Очки и шлемы", slug: "ochki-i-shlemy", description: "FPV-очки и шлемы", sortOrder: 5 },
+  "Аккамуляторы и зарядные устройства": { name: "Аккумуляторы и зарядные устройства", slug: "akkumulyatory", description: "Аккумуляторы и зарядки", sortOrder: 6 },
+  "Полетные контроллеры и стеки": { name: "Полётные контроллеры и стеки", slug: "poletnye-kontrollery-i-steki", description: "Полётные контроллеры, стеки, ESC", sortOrder: 7 },
+  "Камеры, VTX, юниты и антенны": { name: "Камеры, VTX и антенны", slug: "kamery-vtx-antenny", description: "FPV-камеры, видеопередатчики, цифровые юниты и антенны", sortOrder: 8 },
+  "GPS": { name: "GPS-модули", slug: "gps", description: "GPS-модули и компасы", sortOrder: 9 },
 };
 
 async function main() {
