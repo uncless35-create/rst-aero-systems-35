@@ -82,6 +82,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
             <Badge variant="muted">Временно нет в наличии</Badge>
           ) : !product.inStock ? (
             <Badge variant="muted">Нет в наличии</Badge>
+          ) : !product.hasVariants && product.stockQty <= 3 ? (
+            <Badge variant="muted" className="bg-red-600 text-white">Осталось мало</Badge>
           ) : null}
         </div>
 

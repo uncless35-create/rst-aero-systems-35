@@ -135,10 +135,12 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
         <span className="text-sm text-muted-foreground">
           {product.outOfStock ? (
             <span className="text-amber-600">Временно нет в наличии</span>
-          ) : inStock ? (
-            <span className="text-success">В наличии{!hasVariants && maxStock <= 5 ? ` · ${maxStock} шт` : ""}</span>
-          ) : (
+          ) : !inStock ? (
             "Нет в наличии"
+          ) : maxStock <= 3 ? (
+            <span className="font-semibold text-red-600">Осталось мало</span>
+          ) : (
+            <span className="text-success">В наличии</span>
           )}
         </span>
       </div>
