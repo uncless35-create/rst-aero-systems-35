@@ -210,6 +210,37 @@ const META: Record<string, Meta> = {
     description: "6S аккумулятор Ovonic 1550mAh с разъёмом XT60 — увеличенная ёмкость.",
     attributes: [["Ёмкость", "1550 mAh"], ["Банки", "6S"], ["Разъём", "XT60"]],
   },
+  // --- Новые товары (Air65/Air75 II + RadioMaster Nomad) ---
+  "air65-ii-brushless-whoop-quadcopter-racing-1080x": {
+    slug: "tinivup-betafpv-air65-ii-racing",
+    name: "Тинивуп BetaFPV Air65 II (Racing)",
+    description: "Бесколлекторный вуп BetaFPV Air65 II в версии Racing (65 мм, 1S) — облегчённая скоростная сборка для гонок и динамичных полётов.",
+    attributes: [["Класс", "65 мм (whoop)"], ["Питание", "1S"], ["Тип", "Бесколлекторный"], ["Версия", "Racing (скоростная)"]],
+  },
+  "air65-ii-brushless-whoop-quadcopter-freestyle-1080x": {
+    slug: "tinivup-betafpv-air65-ii-freestyle",
+    name: "Тинивуп BetaFPV Air65 II (Freestyle)",
+    description: "Бесколлекторный вуп BetaFPV Air65 II в версии Freestyle (65 мм, 1S) — настроен под фристайл: отзывчивое управление и запас прочности.",
+    attributes: [["Класс", "65 мм (whoop)"], ["Питание", "1S"], ["Тип", "Бесколлекторный"], ["Версия", "Freestyle"]],
+  },
+  "air75-ii-brushless-whoop-quadcopter-racing-1080x": {
+    slug: "tinivup-betafpv-air75-ii-racing",
+    name: "Тинивуп BetaFPV Air75 II (Racing)",
+    description: "Бесколлекторный вуп BetaFPV Air75 II в версии Racing (75 мм, 1S) — скоростная версия с увеличенной тягой для гонок.",
+    attributes: [["Класс", "75 мм (whoop)"], ["Питание", "1S"], ["Тип", "Бесколлекторный"], ["Версия", "Racing (скоростная)"]],
+  },
+  "air75-ii-brushless-whoop-quadcopter-freestyle-1080x": {
+    slug: "tinivup-betafpv-air75-ii-freestyle",
+    name: "Тинивуп BetaFPV Air75 II (Freestyle)",
+    description: "Бесколлекторный вуп BetaFPV Air75 II в версии Freestyle (75 мм, 1S) — больше тяги и стабильности для фристайла.",
+    attributes: [["Класс", "75 мм (whoop)"], ["Питание", "1S"], ["Тип", "Бесколлекторный"], ["Версия", "Freestyle"]],
+  },
+  "radiomaster-nomad": {
+    slug: "apparatura-radiomaster-nomad",
+    name: "Аппаратура RadioMaster Nomad",
+    description: "Аппаратура управления RadioMaster Nomad с модулем ELRS 2.4 ГГц.",
+    attributes: [["Протокол", "ELRS"], ["Диапазон", "2.4 ГГц"]],
+  },
 };
 
 // Цены (руб) по slug товара. 0/нет — цена не задана.
@@ -257,7 +288,7 @@ const CATEGORY_MAP: Record<string, { name: string; slug: string; description: st
   "Дроны": { name: "Дроны", slug: "drony", description: "Готовые FPV-дроны", sortOrder: 0, featured: true },
   "тинивупы": { name: "Тинивупы", slug: "tinivupy", description: "Микро-дроны для полётов в помещении", sortOrder: 1, featured: true },
   "Синевупы": { name: "Синивупы", slug: "sinivupy", description: "Cinewhoop для съёмки", sortOrder: 2, featured: true },
-  "Аппаратуры управления": { name: "Аппаратура управления", slug: "apparatura", description: "Пульты и передатчики", sortOrder: 3 },
+  "Аппаратуры управления и передатчики": { name: "Аппаратура управления и передатчики", slug: "apparatura", description: "Пульты и передатчики", sortOrder: 3 },
   "Очки и шлема": { name: "Очки и шлемы", slug: "ochki-i-shlemy", description: "FPV-очки и шлемы", sortOrder: 4 },
   "Аккамуляторы и зарядные устройства": { name: "Аккумуляторы и зарядные устройства", slug: "akkumulyatory", description: "Аккумуляторы и зарядки", sortOrder: 5 },
   "Полетные контроллеры и стеки": { name: "Полётные контроллеры и стеки", slug: "poletnye-kontrollery-i-steki", description: "Полётные контроллеры, стеки, ESC", sortOrder: 6 },
