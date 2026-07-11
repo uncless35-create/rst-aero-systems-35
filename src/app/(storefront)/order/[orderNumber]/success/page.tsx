@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PaymentPoller } from "@/components/storefront/payment-poller";
+import { OrderGoal } from "@/components/analytics/order-goal";
 import { getTbankState, mapTbankStatus } from "@/lib/tbank";
 import { formatRub } from "@/lib/money";
 import {
@@ -69,6 +70,7 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
   return (
     <div className="mx-auto max-w-2xl px-4 pt-10">
       <PaymentPoller pollable={pollable} />
+      <OrderGoal orderNumber={order.orderNumber} />
       <div className="text-center">
         <div className="mx-auto grid size-16 place-items-center rounded-full bg-success/10">
           <CheckCircle2 className="size-8 text-success" />
@@ -123,6 +125,24 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
           </div>
         </div>
       </div>
+
+      {order.cdekTrackNumber && (
+        <div className="mt-4 rounded-3xl border border-border p-5 text-sm">
+          <p className="font-medium">Отслеживание СДЭК</p>
+          <p className="mt-2 text-muted-foreground">
+            Номер накладной:{" "}
+            <span className="font-semibold text-foreground">{order.cdekTrackNumber}</span>
+          </p>
+          <a
+            href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(order.cdekTrackNumber)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-block font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Отследить посылку →
+          </a>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Button asChild variant="surface">

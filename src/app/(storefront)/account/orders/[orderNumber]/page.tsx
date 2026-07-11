@@ -78,6 +78,24 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
         </div>
       </div>
 
+      {order.cdekTrackNumber && (
+        <div className="mt-4 rounded-3xl border border-border p-5 text-sm">
+          <p className="font-medium">Отслеживание СДЭК</p>
+          <p className="mt-2 text-muted-foreground">
+            Номер накладной:{" "}
+            <span className="font-semibold text-foreground">{order.cdekTrackNumber}</span>
+          </p>
+          <a
+            href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(order.cdekTrackNumber)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-block font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Отследить посылку →
+          </a>
+        </div>
+      )}
+
       <div className="mt-4 rounded-3xl bg-surface p-5 text-sm">
         <p className="font-medium">Данные получателя</p>
         <div className="mt-2 space-y-1 text-muted-foreground">
