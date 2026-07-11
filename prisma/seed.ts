@@ -378,21 +378,22 @@ async function main() {
     { name: "СДЭК", description: "Пункт выдачи или курьер — стоимость по тарифу", priceKopecks: 35000, requiresAddress: true, provider: "CDEK", isActive: true, sortOrder: 1 },
     { name: "Почта России", description: "Доставка в любое отделение", priceKopecks: 25000, requiresAddress: true, provider: null, isActive: false, sortOrder: 2 },
   ];
+  // Только создаём отсутствующие — правки владельца из админки НЕ перезаписываем
   for (const d of deliveries) {
     const existing = await prisma.deliveryMethod.findFirst({ where: { name: d.name } });
-    if (existing) await prisma.deliveryMethod.update({ where: { id: existing.id }, data: d });
-    else await prisma.deliveryMethod.create({ data: d });
+    if (!existing) await prisma.deliveryMethod.create({ data: d });
   }
-  console.log(`✓ Способы доставки: ${deliveries.length}`);
+  console.log(`✓ Способы доставки: ${deliveries.length} (существующие не тронуты)`);
 
   // --- Инфостраницы ---
   const pages = [
     { key: "about", title: "О компании", body: "RST AERO SYSTEMS — магазин FPV-дронов, тинивупов, синевупов, запчастей и аппаратуры. Мы подбираем проверенное оборудование для пилотов любого уровня. Отправляем заказы по всей России." },
     { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка: самовывоз со склада в Новороссийске и СДЭК (пункт выдачи или курьер, стоимость рассчитывается по тарифу при оформлении). Оплата онлайн картой или через СБП. После оформления заказа вы будете перенаправлены на защищённую страницу оплаты ЮKassa." },
-    { key: "contacts", title: "Контакты", body: "Телефон: +7 (900) 000-00-00\nПочта: info@rst-aero.ru\nМы на связи ежедневно с 10:00 до 20:00 по МСК." },
+    { key: "contacts", title: "Контакты", body: "Телефон: +7 (988) 652-22-52\nПочта: rst-aero@mail.ru\nМы на связи ежедневно с 10:00 до 20:00 по МСК." },
   ];
-  for (const p of pages) await prisma.siteContent.upsert({ where: { key: p.key }, update: p, create: p });
-  console.log(`✓ Инфостраницы: ${pages.length}`);
+  // Только создаём отсутствующие — тексты, отредактированные в админке, НЕ перезаписываем
+  for (const p of pages) await prisma.siteContent.upsert({ where: { key: p.key }, update: {}, create: p });
+  console.log(`✓ Инфостраницы: ${pages.length} (существующие не тронуты)`);
 
   // --- Категории ---
   const catBySlug: Record<string, string> = {};

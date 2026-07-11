@@ -46,8 +46,8 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 export const SITE = {
   name: "RST AERO SYSTEMS",
   tagline: "FPV-дроны, тинивупы и комплектующие",
-  phone: "+7 (900) 000-00-00",
-  email: "info@rst-aero.ru",
+  phone: "+7 (988) 652-22-52",
+  email: "rst-aero@mail.ru",
 };
 
 /** Характеристика товара (хранится в Product.attributes как JSON). */
