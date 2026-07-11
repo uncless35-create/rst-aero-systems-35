@@ -31,6 +31,7 @@ model Category {
   name        String
   slug        String    @unique
   description String?
+  coverImage  String? // URL фото-обложки (если пусто — первое фото топового товара)
   sortOrder   Int       @default(0)
   isVisible   Boolean   @default(true)
   products    Product[]

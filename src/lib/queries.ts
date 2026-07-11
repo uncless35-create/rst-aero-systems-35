@@ -164,7 +164,8 @@ export const getCategoriesWithImage = unstable_cache(
       id: c.id,
       name: c.name,
       slug: c.slug,
-      image: c.products[0]?.images[0]?.url ?? null,
+      // Явная обложка категории приоритетнее авто-подбора
+      image: c.coverImage ?? c.products[0]?.images[0]?.url ?? null,
       productCount: c._count.products,
     }));
   },
