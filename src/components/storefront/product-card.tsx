@@ -56,7 +56,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
 
   return (
     <div
-      className="group animate-fade-up"
+      className="group flex h-full flex-col animate-fade-up"
       style={{ animationDelay: `${Math.min(index * 0.03, 0.2)}s` }}
     >
       <div className="relative aspect-square overflow-hidden rounded-3xl bg-surface">
@@ -113,15 +113,16 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
         </button>
       </div>
 
-      <Link href={`/product/${product.slug}`} className="mt-3 block space-y-1 px-1">
+      <Link href={`/product/${product.slug}`} className="mt-3 block flex-1 space-y-1 px-1">
         {product.categoryName ? (
-          <p className="text-xs text-muted-foreground">{product.categoryName}</p>
+          <p className="line-clamp-1 text-xs text-muted-foreground">{product.categoryName}</p>
         ) : null}
-        <h3 className="line-clamp-2 text-sm font-medium leading-snug">{product.name}</h3>
+        {/* Название всегда занимает ровно 2 строки — цены и кнопки стоят на одной линии */}
+        <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-snug">{product.name}</h3>
         <Price kopecks={product.priceKopecks} oldKopecks={product.oldPriceKopecks} size="sm" />
       </Link>
 
-      <div className="mt-2 px-1">
+      <div className="mt-auto px-1 pt-2">
         <button
           type="button"
           onClick={handleAdd}
