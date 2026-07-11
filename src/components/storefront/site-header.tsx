@@ -16,9 +16,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
         <Link href="/" className="flex flex-col leading-none">
-          <span className="text-base font-bold tracking-tight">RST</span>
+          <span className="text-base font-bold tracking-tight">RST AERO</span>
           <span className="text-[10px] font-medium tracking-[0.25em] text-muted-foreground">
-            AERO SYSTEMS
+            SYSTEMS
           </span>
         </Link>
 
