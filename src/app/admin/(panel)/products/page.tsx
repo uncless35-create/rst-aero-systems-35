@@ -13,13 +13,15 @@ export default async function AdminProductsPage() {
     include: {
       category: true,
       images: { orderBy: { sortOrder: "asc" }, take: 1 },
-      _count: { select: { variants: true } },
+      variants: { select: { stockQty: true } },
     },
   });
+  const verifiedCount = products.filter((product) => product.contentStatus === "VERIFIED").length;
+  const reviewCount = products.filter((product) => product.contentStatus === "NEEDS_REVIEW").length;
 
   return (
     <div className="mx-auto max-w-4xl">
-      <AdminPageHeader title="Товары" description={`Всего: ${products.length}`}>
+      <AdminPageHeader title="Товары" description={`Всего: ${products.length} · проверено: ${verifiedCount} · нужно сверить: ${reviewCount}`}>
         <Button asChild className="gap-2">
           <Link href="/admin/products/new">
             <Plus className="size-4" /> Добавить товар
@@ -34,9 +36,13 @@ export default async function AdminProductsPage() {
           image: p.images[0]?.url ?? null,
           categoryName: p.category.name,
           priceKopecks: p.priceKopecks,
-          stockQty: p.stockQty,
+          stockQty: p.variants.length
+            ? p.variants.reduce((sum, variant) => sum + variant.stockQty, 0)
+            : p.stockQty,
           isActive: p.isActive,
-          variantsCount: p._count.variants,
+          variantsCount: p.variants.length,
+          contentStatus: p.contentStatus as "DRAFT" | "NEEDS_REVIEW" | "VERIFIED",
+          contentReviewNote: p.contentReviewNote,
         }))}
       />
     </div>

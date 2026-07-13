@@ -1,9 +1,9 @@
 import { Truck, CreditCard, ShieldCheck, Headset } from "lucide-react";
 
 const ITEMS = [
-  { icon: Truck, title: "Доставка по России", text: "СДЭК, Почта России, самовывоз" },
-  { icon: CreditCard, title: "Оплата картой и СБП", text: "Безопасная онлайн-оплата" },
-  { icon: ShieldCheck, title: "Проверенное оборудование", text: "Только рабочие компоненты" },
+  { icon: Truck, title: "Доставка по России", text: "СДЭК и самовывоз в Новороссийске" },
+  { icon: CreditCard, title: "Подтверждение заказа", text: "Менеджер согласует наличие и оплату" },
+  { icon: ShieldCheck, title: "Проверенные карточки", text: "Версии и характеристики сверяем по источникам" },
   { icon: Headset, title: "Поддержка пилотов", text: "Поможем с выбором и настройкой" },
 ];
 

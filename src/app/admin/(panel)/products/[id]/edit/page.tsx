@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductForm } from "@/components/admin/product-form";
-import { parseAttributes } from "@/lib/constants";
+import { parseAttributes, parseProductSources } from "@/lib/constants";
 import { kopecksToRubles } from "@/lib/money";
 
 export const metadata = { title: "Редактировать товар" };
@@ -39,6 +39,13 @@ export default async function EditProductPage({ params }: { params: Params }) {
           slug: product.slug,
           categoryId: product.categoryId,
           description: product.description ?? "",
+          summary: product.summary ?? "",
+          exactVariant: product.exactVariant ?? "",
+          compatibility: product.compatibility ?? "",
+          packageContents: product.packageContents ?? "",
+          contentStatus: product.contentStatus as "DRAFT" | "NEEDS_REVIEW" | "VERIFIED",
+          contentReviewNote: product.contentReviewNote ?? "",
+          sources: parseProductSources(product.contentSources),
           priceRub: kopecksToRubles(product.priceKopecks),
           oldPriceRub: product.oldPriceKopecks ? kopecksToRubles(product.oldPriceKopecks) : null,
           stockQty: product.stockQty,

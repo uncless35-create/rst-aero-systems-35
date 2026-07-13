@@ -16,7 +16,11 @@ import { loginSchema, type LoginInput } from "@/lib/validation/auth";
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/account";
+  const requestedCallback = params.get("callbackUrl");
+  const callbackUrl =
+    requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
+      ? requestedCallback
+      : "/account";
   const [submitting, setSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
@@ -25,19 +29,24 @@ function LoginInner() {
 
   async function onSubmit(values: LoginInput) {
     setSubmitting(true);
-    const res = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
-    setSubmitting(false);
+    try {
+      const res = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
 
-    if (res?.error) {
-      toast.error("Неверный email или пароль");
-    } else {
-      toast.success("Вы вошли");
-      router.push(callbackUrl);
-      router.refresh();
+      if (res?.error) {
+        toast.error("Неверный email или пароль");
+      } else {
+        toast.success("Вы вошли");
+        router.push(callbackUrl);
+        router.refresh();
+      }
+    } catch {
+      toast.error("Не удалось выполнить вход. Повторите попытку.");
+    } finally {
+      setSubmitting(false);
     }
   }
 

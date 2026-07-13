@@ -4,7 +4,7 @@ import Script from "next/script";
 // Без неё ничего не рендерится.
 export function YandexMetrica() {
   const id = process.env.NEXT_PUBLIC_YANDEX_METRICA_ID;
-  if (!id) return null;
+  if (!id || !/^\d+$/.test(id)) return null;
 
   return (
     <>

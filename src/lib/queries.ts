@@ -29,6 +29,7 @@ export function toCardData(p: ProductWithCard): ProductCardData {
     categoryName: p.category?.name,
     inStock: !p.outOfStock && (p.stockQty > 0 || p.variants.some((v) => v.stockQty > 0)),
     outOfStock: p.outOfStock,
+    requiresConfirmation: p.contentStatus !== "VERIFIED",
     hasVariants: p.variants.length > 0,
     stockQty: p.stockQty,
     weightGrams: p.weightGrams,
@@ -89,7 +90,13 @@ const _getCatalog = unstable_cache(
   async (filters: CatalogFilters) => {
     const where: Prisma.ProductWhereInput = { isActive: true };
     if (filters.categorySlug) where.category = { slug: filters.categorySlug };
-    if (filters.inStockOnly) where.stockQty = { gt: 0 };
+    if (filters.inStockOnly) {
+      where.outOfStock = false;
+      where.OR = [
+        { stockQty: { gt: 0 } },
+        { variants: { some: { stockQty: { gt: 0 } } } },
+      ];
+    }
 
     const orderBy: Prisma.ProductOrderByWithRelationInput =
       filters.sort === "price-asc"

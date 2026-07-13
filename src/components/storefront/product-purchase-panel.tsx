@@ -28,6 +28,7 @@ export type PurchaseProduct = {
   variantLabel: string | null;
   image: string | null;
   weightGrams: number | null;
+  requiresConfirmation: boolean;
   variants: PurchaseVariant[];
 };
 
@@ -46,10 +47,16 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
   const effectivePrice = selectedVariant?.priceKopecks ?? product.priceKopecks;
   const maxStock = hasVariants ? (selectedVariant?.stockQty ?? 0) : product.stockQty;
   const inStock = maxStock > 0;
-  const available = inStock && !product.outOfStock; // можно ли купить
+  const available = inStock && !product.outOfStock && !product.requiresConfirmation; // можно ли купить
   const needsVariant = hasVariants && !selectedVariant;
 
   function handleAdd() {
+    if (product.requiresConfirmation) {
+      window.dispatchEvent(new CustomEvent("rst:open-manager-chat", {
+        detail: { draft: `Здравствуйте! Уточните, пожалуйста, точную версию товара «${product.name}» перед заказом.` },
+      }));
+      return;
+    }
     if (product.outOfStock) {
       toast.error("Товара временно нет в наличии");
       return;
@@ -133,7 +140,9 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
         </div>
 
         <span className="text-sm text-muted-foreground">
-          {product.outOfStock ? (
+          {product.requiresConfirmation ? (
+            <span className="text-amber-600">Версию подтвердит менеджер</span>
+          ) : product.outOfStock ? (
             <span className="text-amber-600">Временно нет в наличии</span>
           ) : !inStock ? (
             "Нет в наличии"
@@ -150,11 +159,13 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={handleAdd}
-          disabled={!available}
+          disabled={!available && !product.requiresConfirmation}
           className={cn(buttonVariants({ size: "lg" }), "flex-1")}
         >
           {added ? <Check className="size-5" /> : <ShoppingBag className="size-5" />}
-          {added
+          {product.requiresConfirmation
+            ? "Уточнить версию"
+            : added
             ? "В корзине"
             : product.outOfStock
               ? "Временно нет"
@@ -162,17 +173,19 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
                 ? "В корзину"
                 : "Нет в наличии"}
         </motion.button>
-        <Button
-          size="lg"
-          variant="surface"
-          onClick={() => {
-            handleAdd();
-            router.push("/cart");
-          }}
-          disabled={!available}
-        >
-          Купить
-        </Button>
+        {!product.requiresConfirmation ? (
+          <Button
+            size="lg"
+            variant="surface"
+            onClick={() => {
+              handleAdd();
+              router.push("/cart");
+            }}
+            disabled={!available}
+          >
+            Купить
+          </Button>
+        ) : null}
       </div>
     </div>
   );

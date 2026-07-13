@@ -5,6 +5,8 @@ import {
   getTbankState,
   mapTbankStatus,
 } from "@/lib/tbank";
+import { revalidateTag } from "next/cache";
+import { applyOrderPaymentState } from "@/lib/order-payment";
 
 // Вебхук Т-Банка. Безопасность: проверяем подпись уведомления, затем ПЕРЕПРОВЕРЯЕМ
 // статус запросом GetState (не доверяем телу). Идемпотентен. Ответ — «OK» (обязательно).
@@ -40,22 +42,23 @@ export async function POST(req: Request) {
     const status = (await getTbankState(paymentId)) ?? String(body.Status ?? "");
     const mapped = mapTbankStatus(status);
 
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, tbankPaymentId: true },
+    });
     if (!order) return ok();
-
-    // Идемпотентность: не трогаем уже финальные
-    if (order.paymentStatus === "SUCCEEDED" || order.paymentStatus === "CANCELLED") {
+    if (order.tbankPaymentId && order.tbankPaymentId !== paymentId) {
+      console.error("Т-Банк вебхук: PaymentId не совпадает с заказом");
       return ok();
     }
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        tbankPaymentId: paymentId,
-        paymentStatus: mapped.paymentStatus,
-        ...(mapped.orderStatus ? { status: mapped.orderStatus } : {}),
-      },
+    const applied = await applyOrderPaymentState({
+      orderId,
+      tbankPaymentId: paymentId,
+      paymentStatus: mapped.paymentStatus,
+      orderStatus: mapped.orderStatus,
     });
+    if (applied?.inventoryRestored) revalidateTag("products", "max");
   } catch (e) {
     console.error("Т-Банк вебхук:", e);
     // Вернём OK, чтобы не зациклить повторы; статус подтянется поллингом/следующим уведомлением

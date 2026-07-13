@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/storefront/site-header";
 import { BottomNav } from "@/components/storefront/bottom-nav";
 import { Footer } from "@/components/storefront/footer";
+import { ManagerChat } from "@/components/storefront/manager-chat";
 
 export default function StorefrontLayout({
   children,
@@ -13,6 +14,7 @@ export default function StorefrontLayout({
       <main className="flex-1 pb-24 md:pb-0">{children}</main>
       <Footer />
       <BottomNav />
+      <ManagerChat />
     </div>
   );
 }

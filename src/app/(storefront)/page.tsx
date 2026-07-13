@@ -36,8 +36,8 @@ export default async function HomePage() {
               FPV-дроны, тинивупы и всё для полёта
             </h1>
             <p className="mt-4 text-primary-foreground/70">
-              Проверенное оборудование для пилотов любого уровня. Быстрая доставка
-              по России, оплата картой и СБП.
+              Проверенное оборудование для пилотов любого уровня. Доставка по
+              России и помощь менеджера с совместимостью компонентов.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="accent" size="lg">
@@ -69,11 +69,11 @@ export default async function HomePage() {
         <CategoryGrid categories={categories} />
       </section>
 
-      {/* Хиты */}
+      {/* Рекомендации */}
       {featured.length > 0 && (
         <section className="pt-14">
           <div className="mb-6 flex items-baseline justify-between">
-            <h2 className="text-xl font-semibold tracking-tight">Хиты продаж</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Рекомендуем</h2>
             <Link href="/catalog" className="text-sm text-muted-foreground hover:text-foreground">
               Смотреть все
             </Link>

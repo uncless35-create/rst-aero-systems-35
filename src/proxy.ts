@@ -9,7 +9,6 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const role = req.auth?.user?.role;
 
-  // Админка: только для ADMIN (кроме страницы входа)
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login") return NextResponse.next();
     if (!isLoggedIn || role !== "ADMIN") {
@@ -18,13 +17,10 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Личный кабинет: только для авторизованных
-  if (pathname.startsWith("/account")) {
-    if (!isLoggedIn) {
-      const url = new URL("/login", req.nextUrl);
-      url.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(url);
-    }
+  if (pathname.startsWith("/account") && !isLoggedIn) {
+    const url = new URL("/login", req.nextUrl);
+    url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

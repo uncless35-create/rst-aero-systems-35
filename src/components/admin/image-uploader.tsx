@@ -24,11 +24,13 @@ export function ImageUploader({
   function addUrl() {
     const trimmed = url.trim();
     if (!trimmed) return;
-    try {
-      new URL(trimmed);
-    } catch {
-      toast.error("Некорректная ссылка");
-      return;
+    if (!trimmed.startsWith("/")) {
+      try {
+        new URL(trimmed);
+      } catch {
+        toast.error("Некорректная ссылка");
+        return;
+      }
     }
     onChange([...value, { url: trimmed }]);
     setUrl("");
@@ -96,7 +98,7 @@ export function ImageUploader({
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Ссылка на изображение (https://…)"
+            placeholder="Supabase HTTPS или /products/…"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();

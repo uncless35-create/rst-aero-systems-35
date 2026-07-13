@@ -21,7 +21,10 @@ model User {
   name         String
   phone        String?
   role         String   @default("CUSTOMER") // "CUSTOMER" | "ADMIN"
+  privacyAcceptedAt DateTime?
+  privacyPolicyVersion String?
   orders       Order[]
+  chatConversations ChatConversation[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -45,12 +48,20 @@ model Product {
   slug            String           @unique
   sku             String?          @unique
   description     String?
+  summary         String? // короткое описание рядом с блоком покупки
+  exactVariant    String? // точная версия/комплектация, подтверждённая по источникам
+  compatibility   String? // совместимость и что требуется докупить
+  packageContents String? // фактическая комплектация поставки
+  contentSources  String? // JSON: официальные страницы, инструкции, дата проверки
+  contentStatus   String           @default("DRAFT") // DRAFT|NEEDS_REVIEW|VERIFIED
+  contentReviewNote String? // внутренняя заметка: что сверить перед публикацией
+  contentVerifiedAt DateTime?
   priceKopecks    Int
   oldPriceKopecks Int?
   stockQty        Int              @default(0)
   isActive        Boolean          @default(true)
   outOfStock      Boolean          @default(false) // «Временно нет в наличии» — товар виден, но купить нельзя
-  isFeatured      Boolean          @default(false) // показывать в «Хиты» на главной
+  isFeatured      Boolean          @default(false) // показывать в «Рекомендуем» на главной
   badge           String? // напр. «Хит продаж», «Новинка»
   variantLabel    String? // напр. «Цвет» / «Частота»; если задан — есть варианты
   attributes      String? // JSON-строка: [{"name":"Вес","value":"32 г"}]
@@ -60,10 +71,52 @@ model Product {
   images          ProductImage[]
   variants        ProductVariant[]
   orderItems      OrderItem[]
+  chatConversations ChatConversation[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
   @@index([categoryId])
+}
+
+/// Диалог покупателя с менеджером. publicToken служит секретом доступа
+/// для анонимного посетителя и не показывается в Telegram целиком.
+model ChatConversation {
+  id                    String        @id @default(cuid())
+  publicToken           String        @unique
+  status                String        @default("OPEN") // OPEN|CLOSED
+  customerName          String?
+  customerContact       String?
+  pagePath              String?
+  userId                String?
+  user                  User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  productId             String?
+  product               Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  telegramRootMessageId String?
+  privacyAcceptedAt     DateTime?
+  privacyPolicyVersion  String?
+  lastMessageAt         DateTime      @default(now())
+  messages              ChatMessage[]
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([status, lastMessageAt])
+  @@index([userId])
+  @@index([productId])
+}
+
+model ChatMessage {
+  id                String           @id @default(cuid())
+  conversationId    String
+  conversation      ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender            String // CUSTOMER|MANAGER
+  body              String
+  deliveryStatus    String           @default("PENDING") // PENDING|DELIVERED|FAILED|SKIPPED
+  telegramMessageId String?          @unique
+  telegramUpdateId  String?          @unique
+  readAt            DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 model ProductImage {
@@ -105,7 +158,8 @@ model DeliveryMethod {
 
 model Order {
   id                   String      @id @default(cuid())
-  orderNumber          Int         @unique
+  orderNumber          Int         @unique @default(autoincrement())
+  accessToken          String?     @unique @default(cuid()) // секретный токен гостевого просмотра заказа
   userId               String?
   user                 User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   customerName         String
@@ -127,6 +181,9 @@ model Order {
   paymentStatus        String      @default("PENDING") // PENDING|WAITING_FOR_CAPTURE|SUCCEEDED|CANCELLED
   yookassaPaymentId    String?     @unique
   tbankPaymentId       String?     @unique // id платежа в Т-Банке (интернет-эквайринг)
+  inventoryRestoredAt  DateTime? // остатки возвращены после отмены; маркер идемпотентности
+  privacyAcceptedAt    DateTime?
+  privacyPolicyVersion String?
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt

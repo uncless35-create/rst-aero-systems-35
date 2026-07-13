@@ -98,6 +98,39 @@ export type CdekTariffResult = {
   periodMax: number | null;
 };
 
+export type CdekDeliveryPoint = {
+  code: string;
+  cityCode: number;
+  city: string | null;
+  address: string;
+};
+
+/** Получает ПВЗ по точному коду для серверной проверки выбора покупателя. */
+export async function getCdekDeliveryPoint(code: string): Promise<CdekDeliveryPoint | null> {
+  const params = new URLSearchParams({ code });
+  const res = await cdekFetch(`deliverypoints?${params.toString()}`, { method: "GET" });
+  if (!res.ok) return null;
+  const data = (await res.json()) as Array<{
+    code?: string;
+    location?: {
+      city_code?: number;
+      city?: string;
+      address?: string;
+      address_full?: string;
+    };
+  }>;
+  const point = data.find((item) => item.code === code);
+  const cityCode = point?.location?.city_code;
+  const address = point?.location?.address_full || point?.location?.address;
+  if (!point?.code || cityCode == null || !address) return null;
+  return {
+    code: point.code,
+    cityCode,
+    city: point.location?.city ?? null,
+    address,
+  };
+}
+
 /**
  * Серверный расчёт стоимости доставки по конкретному тарифу.
  * Используется при создании заказа — данным клиента о цене не доверяем.

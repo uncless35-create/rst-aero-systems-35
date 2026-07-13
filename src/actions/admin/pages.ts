@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
 
 const schema = z.object({
-  key: z.string().min(1),
-  title: z.string().trim().min(2, "Укажите заголовок"),
-  body: z.string().trim().min(1, "Заполните текст"),
+  key: z.enum(["about", "delivery-payment", "contacts"]),
+  title: z.string().trim().min(2, "Укажите заголовок").max(200),
+  body: z.string().trim().min(1, "Заполните текст").max(30_000),
 });
 
 export async function updateSiteContent(

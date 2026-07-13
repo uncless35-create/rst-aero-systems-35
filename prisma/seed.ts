@@ -2,8 +2,11 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import fs from "node:fs";
 import path from "node:path";
+import { productContent, validateProductContent } from "../src/data/product-content";
 
 const prisma = new PrismaClient();
+const contentBySlug = new Map(productContent.map((record) => [record.slug, record]));
+const contentCheckedAt = new Date("2026-07-13T00:00:00.000Z");
 
 // --- Транслитерация для slug ---
 const TR: Record<string, string> = {
@@ -28,6 +31,12 @@ const PUBLIC_DIR = path.join(process.cwd(), "public", "products");
 
 // Файлы-дубли, которые не импортируем (товар уже есть под другим именем файла)
 const SKIP_SLUGS = new Set<string>([]);
+
+// Точечные замены для ошибочных исходных фото. TX15 MAX в исходном каталоге
+// был побайтно тем же снимком, что обычный TX15.
+const PRIMARY_IMAGE_OVERRIDES: Record<string, string> = {
+  "radiomaster-tx15-max": "https://radiomasterrc.com/cdn/shop/files/TX15MAX.jpg",
+};
 
 // Причёсанные названия, описания и характеристики по slug товара.
 // slug — необязательное переопределение адреса страницы товара.
@@ -121,9 +130,9 @@ const META: Record<string, Meta> = {
     attributes: [["Тип", "Cinewhoop"], ["Видеосистема", "DJI O4 Pro"], ["Управление", "ELRS 2.4 ГГц"]],
   },
   "sinevup-betafpv-pavo-20-pro-ii": {
-    name: "Cinewhoop BetaFPV Pavo 20 Pro (II)",
-    description: "Компактный cinewhoop BetaFPV Pavo 20 Pro для съёмки в помещении и на улице.",
-    attributes: [["Тип", "Cinewhoop"]],
+    name: "Cinewhoop BETAFPV Pavo20 Pro O3 PNP",
+    description: "PNP-платформа BETAFPV Pavo20 Pro под установку DJI O3 Air Unit; видеосистема не входит.",
+    attributes: [["Тип", "Cinewhoop"], ["Комплектация", "O3 PNP, без видеосистемы"]],
   },
   "tinivup-happymodel-mobula-7-1s-elrs": {
     name: "Тинивуп HappyModel Mobula7 1S (ELRS)",
@@ -131,9 +140,9 @@ const META: Record<string, Meta> = {
     attributes: [["Питание", "1S"], ["Управление", "ELRS"]],
   },
   "tinivup-happymodel-mobula-7-1s-hdzero": {
-    name: "Тинивуп HappyModel Mobula7 1S (HDZero)",
-    description: "Тинивуп HappyModel Mobula7 1S с цифровой HD-видеосистемой HDZero.",
-    attributes: [["Питание", "1S"], ["Видеосистема", "HDZero"]],
+    name: "Тинивуп Happymodel Moblite7 1S HDZero ELRS",
+    description: "Цифровой 75-мм тинивуп Moblite7 HDZero на 1S со SPI ELRS 2.4 ГГц.",
+    attributes: [["Питание", "1S, GNB27"], ["Видеосистема", "HDZero"], ["Управление", "ELRS 2.4 ГГц"]],
   },
   "tinivup-betafpv-meteor-75-pro-o4-elrs": {
     name: "Тинивуп BetaFPV Meteor75 Pro O4 (ELRS)",
@@ -362,15 +371,46 @@ const CATEGORY_MAP: Record<string, { name: string; slug: string; description: st
 async function main() {
   console.log("🌱 Сидирование базы…");
 
+  const contentErrors = validateProductContent();
+  if (contentErrors.length) {
+    throw new Error(`Реестр карточек не прошёл проверку:\n${contentErrors.join("\n")}`);
+  }
+
+  const existingProductCount = await prisma.product.count();
+  if (existingProductCount > 0 && process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    throw new Error(
+      `В базе уже есть ${existingProductCount} товаров. Сид удаляет каталог целиком; ` +
+      "для осознанного запуска задайте ALLOW_DESTRUCTIVE_SEED=true.",
+    );
+  }
+
   // --- Администратор ---
   const adminEmail = process.env.ADMIN_EMAIL ?? "admin@rst-aero.ru";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "admin12345";
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const needsSecureAdminPassword = !existingAdmin || existingAdmin.role !== "ADMIN";
+  if (
+    needsSecureAdminPassword &&
+    (!adminPassword || adminPassword.length < 12 || adminPassword === "смените-меня")
+  ) {
+    throw new Error(
+      "Для создания администратора задайте уникальный ADMIN_PASSWORD длиной не менее 12 символов",
+    );
+  }
+  const adminPasswordHash = existingAdmin?.role === "ADMIN"
+    ? existingAdmin.passwordHash
+    : await bcrypt.hash(adminPassword!, 10);
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { role: "ADMIN" },
-    create: { email: adminEmail, name: "Администратор", passwordHash: await bcrypt.hash(adminPassword, 10), role: "ADMIN" },
+    update: { role: "ADMIN", ...(needsSecureAdminPassword ? { passwordHash: adminPasswordHash } : {}) },
+    create: {
+      email: adminEmail,
+      name: "Администратор",
+      passwordHash: adminPasswordHash,
+      role: "ADMIN",
+    },
   });
-  console.log(`✓ Админ: ${adminEmail} / ${adminPassword}`);
+  console.log(`✓ Админ: ${adminEmail} (пароль не выводится)`);
 
   // --- Способы доставки ---
   const deliveries = [
@@ -388,7 +428,7 @@ async function main() {
   // --- Инфостраницы ---
   const pages = [
     { key: "about", title: "О компании", body: "RST AERO SYSTEMS — магазин FPV-дронов, тинивупов, синевупов, запчастей и аппаратуры. Мы подбираем проверенное оборудование для пилотов любого уровня. Отправляем заказы по всей России." },
-    { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка: самовывоз со склада в Новороссийске и СДЭК (пункт выдачи или курьер, стоимость рассчитывается по тарифу при оформлении). Оплата онлайн картой или через СБП. После оформления заказа вы будете перенаправлены на защищённую страницу оплаты ЮKassa." },
+    { key: "delivery-payment", title: "Доставка и оплата", body: "Доставка\n\nДоступны самовывоз со склада в Новороссийске и СДЭК — до пункта выдачи или курьером. При выборе СДЭК стоимость рассчитывается по тарифу и повторно проверяется сервером перед созданием заказа.\n\nОплата\n\nЕсли онлайн-оплата подключена, после оформления сайт перенаправит вас на защищённую страницу платёжного провайдера для оплаты картой или через СБП. Если перенаправления нет, заказ всё равно будет принят: менеджер свяжется с вами для подтверждения и согласования оплаты. Магазин не получает и не хранит данные банковской карты." },
     { key: "contacts", title: "Контакты", body: "Телефон: +7 (988) 652-22-52\nПочта: rst-aero@mail.ru\nМы на связи ежедневно с 10:00 до 20:00 по МСК." },
   ];
   // Только создаём отсутствующие — тексты, отредактированные в админке, НЕ перезаписываем
@@ -454,32 +494,50 @@ async function main() {
         fs.copyFileSync(path.join(srcDir, f), path.join(destDir, imageName));
         imageUrls.push(`/products/${map.slug}/${imageName}`);
       }
-
       const meta = META[baseSlug];
 
       // Уникальный slug товара (META может переопределить адрес)
       const desiredSlug = meta?.slug ?? baseSlug;
+      const content = contentBySlug.get(desiredSlug);
+      const priceRub = PRICES[baseSlug] ?? 0;
+      if (priceRub > 0 && !content) {
+        throw new Error(`Нет проверенной карточки для активного товара ${desiredSlug}`);
+      }
+      const primaryImageOverride = content?.primaryImageUrl ?? PRIMARY_IMAGE_OVERRIDES[baseSlug];
+      if (primaryImageOverride) imageUrls[0] = primaryImageOverride;
+
       let slug = desiredSlug;
       let n = 1;
       while (await prisma.product.findUnique({ where: { slug } })) { n++; slug = `${desiredSlug}-${n}`; }
-      const displayName = meta?.name ?? name;
-      const attrsJson = meta?.attributes.length
-        ? JSON.stringify(meta.attributes.map(([n, v]) => ({ name: n, value: v })))
-        : null;
+      const displayName = content?.name ?? meta?.name ?? name;
+      const attrsJson = content
+        ? JSON.stringify(content.attributes)
+        : meta?.attributes.length
+          ? JSON.stringify(meta.attributes.map(([n, v]) => ({ name: n, value: v })))
+          : null;
 
-      const priceRub = PRICES[baseSlug] ?? 0;
       await prisma.product.create({
         data: {
           name: displayName,
           slug,
           categoryId: catBySlug[map.slug],
           priceKopecks: priceRub * 100,
-          stockQty: 10,
+          // Остаток — бизнес-данные. Новый каталог безопасно начинает с нуля,
+          // затем фактическое количество вводится через админ-панель.
+          stockQty: 0,
           // Товары без цены скрыты с витрины — включатся после прайс-листа
           isActive: priceRub > 0,
           isFeatured: Boolean(map.featured),
-          description: meta?.description ?? null,
+          summary: content?.summary ?? null,
+          exactVariant: content?.exactVariant ?? null,
+          description: content?.description ?? meta?.description ?? null,
+          compatibility: content?.compatibility ?? null,
+          packageContents: content?.packageContents ?? null,
           attributes: attrsJson,
+          contentSources: content?.sources.length ? JSON.stringify(content.sources) : null,
+          contentStatus: content?.status ?? "DRAFT",
+          contentReviewNote: content?.reviewNote ?? null,
+          contentVerifiedAt: content?.status === "VERIFIED" ? contentCheckedAt : null,
           images: {
             create: imageUrls.map((url, i) => ({ url, alt: displayName, sortOrder: i })),
           },

@@ -36,6 +36,16 @@ export async function createShipmentForOrder(orderId: string): Promise<ShipmentR
   if (order.deliveryMethod.provider !== "CDEK") {
     return { ok: false, error: "У заказа доставка не СДЭК" };
   }
+  if (
+    order.paymentStatus !== "SUCCEEDED" &&
+    order.status !== "PAID" &&
+    order.status !== "PROCESSING"
+  ) {
+    return {
+      ok: false,
+      error: "Перед созданием отправления подтвердите оплату и переведите заказ в статус «Оплачен» или «В обработке».",
+    };
+  }
   if (order.cdekOrderUuid) {
     return { ok: false, error: "Отправление уже создано" };
   }

@@ -63,3 +63,25 @@ export function parseAttributes(json: string | null | undefined): ProductAttribu
     return [];
   }
 }
+
+export type ProductSource = {
+  label: string;
+  url: string;
+  type: "OFFICIAL_PRODUCT" | "OFFICIAL_MANUAL" | "DISTRIBUTOR" | "OTHER";
+};
+
+export function parseProductSources(json: string | null | undefined): ProductSource[] {
+  if (!json) return [];
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (source): source is ProductSource =>
+        typeof source?.label === "string" &&
+        typeof source?.url === "string" &&
+        typeof source?.type === "string",
+    );
+  } catch {
+    return [];
+  }
+}

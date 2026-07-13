@@ -8,7 +8,7 @@ import { FavoriteButton } from "@/components/storefront/favorite-button";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Badge } from "@/components/ui/badge";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
-import { parseAttributes } from "@/lib/constants";
+import { parseAttributes, parseProductSources } from "@/lib/constants";
 
 type Params = Promise<{ slug: string }>;
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   if (!product) return { title: "Товар не найден" };
   return {
     title: product.name,
-    description: product.description ?? undefined,
+    description: product.summary ?? product.description ?? undefined,
   };
 }
 
@@ -30,8 +30,9 @@ export default async function ProductPage({ params }: { params: Params }) {
   if (!product) notFound();
 
   const attributes = parseAttributes(product.attributes);
+  const sources = parseProductSources(product.contentSources);
   const firstImage = product.images[0]?.url ?? null;
-  const inStock = product.stockQty > 0 || product.variants.some((v) => v.stockQty > 0);
+  const inStock = !product.outOfStock && (product.stockQty > 0 || product.variants.some((v) => v.stockQty > 0));
   const related = await getRelatedProducts(product.categoryId, product.id, 4);
 
   return (
@@ -69,11 +70,22 @@ export default async function ProductPage({ params }: { params: Params }) {
                 image: firstImage,
                 inStock,
                 hasVariants: product.variants.length > 0,
+                requiresConfirmation: product.contentStatus !== "VERIFIED",
               }}
             />
           </div>
 
           <h1 className="mt-4 text-3xl font-bold tracking-tight">{product.name}</h1>
+
+          {product.exactVariant ? (
+            <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm">
+              <span className="font-medium">Версия:</span> {product.exactVariant}
+            </p>
+          ) : null}
+
+          {product.summary ? (
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{product.summary}</p>
+          ) : null}
 
           <div className="mt-6">
             <ProductPurchasePanel
@@ -88,6 +100,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 variantLabel: product.variantLabel,
                 image: firstImage,
                 weightGrams: product.weightGrams,
+                requiresConfirmation: product.contentStatus !== "VERIFIED",
                 variants: product.variants.map((v) => ({
                   id: v.id,
                   name: v.name,
@@ -98,29 +111,57 @@ export default async function ProductPage({ params }: { params: Params }) {
             />
           </div>
 
-          {product.description ? (
-            <div className="mt-8 border-t border-border pt-6">
-              <h2 className="mb-2 text-sm font-semibold">Описание</h2>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-                {product.description}
-              </p>
-            </div>
-          ) : null}
-
-          {attributes.length > 0 ? (
-            <div className="mt-8 border-t border-border pt-6">
-              <h2 className="mb-3 text-sm font-semibold">Характеристики</h2>
-              <dl className="divide-y divide-border">
-                {attributes.map((a) => (
-                  <div key={a.name} className="flex justify-between gap-4 py-2 text-sm">
-                    <dt className="text-muted-foreground">{a.name}</dt>
-                    <dd className="text-right font-medium">{a.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ) : null}
         </div>
+      </div>
+
+      <div className="mx-auto mt-12 max-w-4xl space-y-10 border-t border-border pt-10">
+        {product.description ? (
+          <section>
+            <h2 className="text-xl font-semibold tracking-tight">Описание</h2>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.description}</p>
+          </section>
+        ) : null}
+
+        {attributes.length > 0 ? (
+          <section>
+            <h2 className="text-xl font-semibold tracking-tight">Характеристики</h2>
+            <dl className="mt-4 divide-y divide-border rounded-3xl bg-surface px-5 sm:px-6">
+              {attributes.map((attribute) => (
+                <div key={attribute.name} className="grid gap-1 py-3 text-sm sm:grid-cols-[minmax(180px,0.8fr)_1.2fr] sm:gap-8">
+                  <dt className="text-muted-foreground">{attribute.name}</dt>
+                  <dd className="font-medium sm:text-right">{attribute.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
+
+        {product.compatibility ? (
+          <section>
+            <h2 className="text-xl font-semibold tracking-tight">Совместимость</h2>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.compatibility}</p>
+          </section>
+        ) : null}
+
+        {product.packageContents ? (
+          <section>
+            <h2 className="text-xl font-semibold tracking-tight">Комплектация</h2>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.packageContents}</p>
+          </section>
+        ) : null}
+
+        {sources.length > 0 ? (
+          <details className="rounded-2xl border border-border px-5 py-4 text-sm">
+            <summary className="cursor-pointer font-medium">Источники характеристик</summary>
+            <ul className="mt-3 space-y-2 text-muted-foreground">
+              {sources.map((source) => (
+                <li key={source.url}>
+                  <a href={source.url} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:text-foreground">{source.label}</a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
       </div>
 
       {/* Похожие товары */}

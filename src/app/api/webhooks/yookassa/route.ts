@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isYookassaConfigured, getPayment, mapPaymentStatus } from "@/lib/yookassa";
+import { revalidateTag } from "next/cache";
+import { applyOrderPaymentState } from "@/lib/order-payment";
 
 /**
  * Вебхук ЮKassa. Безопасность: НЕ доверяем телу запроса — перепроверяем платёж
@@ -41,17 +43,18 @@ export async function POST(req: Request) {
 
     const { paymentStatus, orderStatus } = mapPaymentStatus(payment.status);
 
-    // Идемпотентность: обновляем только при изменении статуса
-    if (order.paymentStatus !== paymentStatus) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          paymentStatus,
-          yookassaPaymentId: paymentId,
-          ...(orderStatus ? { status: orderStatus } : {}),
-        },
-      });
+    if (order.yookassaPaymentId && order.yookassaPaymentId !== paymentId) {
+      console.error("Вебхук ЮKassa: payment id не совпадает с заказом");
+      return NextResponse.json({ ok: true });
     }
+
+    const applied = await applyOrderPaymentState({
+      orderId: order.id,
+      yookassaPaymentId: paymentId,
+      paymentStatus,
+      orderStatus,
+    });
+    if (applied?.inventoryRestored) revalidateTag("products", "max");
 
     return NextResponse.json({ ok: true });
   } catch (e) {

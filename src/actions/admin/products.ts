@@ -4,7 +4,8 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/slug";
-import { productSchema, type ProductInput } from "@/lib/validation/product";
+import { getListingContentIssues, productSchema, type ProductInput } from "@/lib/validation/product";
+import { parseAttributes, parseProductSources } from "@/lib/constants";
 
 export type ProductActionResult =
   | { ok: true; id: string }
@@ -48,6 +49,14 @@ export async function createProduct(input: ProductInput): Promise<ProductActionR
       slug,
       categoryId: data.categoryId,
       description: data.description || null,
+      summary: data.summary || null,
+      exactVariant: data.exactVariant || null,
+      compatibility: data.compatibility || null,
+      packageContents: data.packageContents || null,
+      contentSources: data.sources.length ? JSON.stringify(data.sources) : null,
+      contentStatus: data.contentStatus,
+      contentReviewNote: data.contentReviewNote || null,
+      contentVerifiedAt: data.contentStatus === "VERIFIED" ? new Date() : null,
       priceKopecks: data.priceKopecks,
       oldPriceKopecks: data.oldPriceKopecks ?? null,
       stockQty: data.stockQty,
@@ -89,6 +98,17 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
   });
   if (!existing) return { ok: false, error: "Товар не найден" };
 
+  const providedVariantIds = data.variants.flatMap((variant) =>
+    variant.id ? [variant.id] : [],
+  );
+  if (new Set(providedVariantIds).size !== providedVariantIds.length) {
+    return { ok: false, error: "Один вариант товара указан несколько раз" };
+  }
+  const existingVariantIds = new Set(existing.variants.map((variant) => variant.id));
+  if (providedVariantIds.some((variantId) => !existingVariantIds.has(variantId))) {
+    return { ok: false, error: "Вариант не принадлежит редактируемому товару" };
+  }
+
   const slug = await resolveSlug(data.name, data.slug, id);
 
   await prisma.$transaction(async (tx) => {
@@ -99,6 +119,15 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
         slug,
         categoryId: data.categoryId,
         description: data.description || null,
+        summary: data.summary || null,
+        exactVariant: data.exactVariant || null,
+        compatibility: data.compatibility || null,
+        packageContents: data.packageContents || null,
+        contentSources: data.sources.length ? JSON.stringify(data.sources) : null,
+        contentStatus: data.contentStatus,
+        contentReviewNote: data.contentReviewNote || null,
+        contentVerifiedAt:
+          data.contentStatus === "VERIFIED" ? existing.contentVerifiedAt ?? new Date() : null,
         priceKopecks: data.priceKopecks,
         oldPriceKopecks: data.oldPriceKopecks ?? null,
         stockQty: data.stockQty,
@@ -140,7 +169,8 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Pr
     }
   });
 
-  revalidate(slug);
+  revalidate(existing.slug);
+  if (slug !== existing.slug) revalidate(slug);
   return { ok: true, id };
 }
 
@@ -154,6 +184,35 @@ export async function deleteProduct(id: string): Promise<{ ok: true } | { ok: fa
 
 export async function toggleProductActive(id: string, isActive: boolean) {
   await assertAdmin();
+  if (isActive) {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      select: {
+        summary: true,
+        exactVariant: true,
+        description: true,
+        compatibility: true,
+        packageContents: true,
+        contentStatus: true,
+        contentReviewNote: true,
+        contentSources: true,
+        attributes: true,
+        priceKopecks: true,
+        _count: { select: { images: true } },
+      },
+    });
+    if (!product) return { ok: false as const, error: "Товар не найден" };
+    const issues = getListingContentIssues({
+      ...product,
+      contentStatus: product.contentStatus as "DRAFT" | "NEEDS_REVIEW" | "VERIFIED",
+      attributes: parseAttributes(product.attributes),
+      sources: parseProductSources(product.contentSources),
+      images: Array.from({ length: product._count.images }),
+    });
+    if (issues.length > 0) {
+      return { ok: false as const, error: issues[0].message };
+    }
+  }
   await prisma.product.update({ where: { id }, data: { isActive } });
   revalidate();
   return { ok: true as const };

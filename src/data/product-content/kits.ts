@@ -1,0 +1,73 @@
+import { official, type ProductContentRecord } from "./types";
+
+export const kitContent: ProductContentRecord[] = [
+  {
+    slug: "nabor-fpv-novichok-dron-ochki-pult",
+    summary: "Аналоговый стартовый набор из Mobula7 1S V2 ELRS, аппаратуры RadioMaster T8L 2.4 ГГц и шлема BETAFPV VR04.",
+    exactVariant: "Mobula7 1S Analog V2 ELRS 2.4 + RadioMaster T8L ELRS 2.4 + BETAFPV VR04 + 2×18650",
+    description: "Комплект объединяет тинивуп, аппаратуру управления и аналоговый FPV-шлем. Mobula7 V2 с камерой Caddx Ant подходит для первых полётов в помещении, VR04 принимает его аналоговый сигнал 5.8 ГГц, а T8L управляет дроном по ExpressLRS 2.4 ГГц. На фотографии также подтверждены два элемента 18650 для пульта. Для полётов нужно отдельно добавить 1S-батареи PH2.0 и совместимую зарядку.",
+    compatibility: "T8L и Mobula7 работают в одном диапазоне ExpressLRS 2.4 ГГц. Для дрона нужны 1S LiPo/LiHV 450–650 мА·ч с PH2.0. Шлем VR04 совместим только с аналоговым видео 5.8 ГГц и не принимает DJI O4/HDZero.",
+    packageContents: "Mobula7 1S Analog V2 ELRS, RadioMaster T8L ELRS 2.4 ГГц, BETAFPV VR04 и 2 аккумулятора 18650 для пульта. Батареи дрона и зарядное устройство на фотографии отсутствуют и не заявлены.",
+    attributes: [
+      { name: "Уровень", value: "стартовый комплект" },
+      { name: "Дрон", value: "Happymodel Mobula7 1S Analog ELRS" },
+      { name: "Аппаратура", value: "RadioMaster T8L ELRS 2.4 ГГц" },
+      { name: "Очки/шлем", value: "BETAFPV VR04, аналог 5.8 ГГц" },
+      { name: "Питание пульта", value: "2×18650 входят" },
+      { name: "Видео", value: "аналоговое" },
+    ],
+    sources: [
+      official("Happymodel — Mobula7 1S V2", "https://www.happymodel.cn/index.php/2022/01/20/happymodel-mobula7-1s-micro-fpv-whoop-drone/"),
+      official("RadioMaster — T8L", "https://radiomasterrc.com/products/t8l-radio-controller"),
+      official("BETAFPV — VR04 FPV Goggles", "https://betafpv.com/products/vr04-fpv-goggles"),
+    ],
+    status: "NEEDS_REVIEW",
+    reviewNote: "Основной состав подтверждён фото. Осталось зафиксировать цвет/регион FCC-LBT T8L по боковой наклейке и характеристики двух 18650. Батарей дрона и зарядки на фото нет.",
+  },
+  {
+    slug: "nabor-start-fpv",
+    summary: "Набор из закрытой коробки BETAFPV Air Series, RadioMaster Pocket, VR04, аккумуляторов и шестипортовой зарядки; версию дрона нужно сверить.",
+    exactVariant: "BETAFPV Air Series (модель, видео и приёмник требуют сверки) + RadioMaster Pocket + BETAFPV VR04",
+    description: "Фактическое фото не соответствует прежнему описанию с Meteor75 Pro: в наборе находится закрытая коробка BETAFPV Air Series. Также видны RadioMaster Pocket, аналоговый шлем VR04, два элемента 18650, упаковка 1S LiHV-батарей и шестипортовая зарядка BETAFPV. Пока модель Air65/Air75 и версия Racing/Freestyle не прочитаны с боковой наклейки, обещать характеристики конкретного дрона нельзя.",
+    compatibility: "Дрон должен быть аналоговой версией с ELRS 2.4 ГГц и BT2.0, чтобы работать с Pocket, VR04, батареями и зарядкой на фото. VR04 не поддерживает DJI O4/HDZero. Перед продажей нужно сверить модель дрона и режим заряда батарей 4,20/4,35 В.",
+    packageContents: "BETAFPV Air Series в закрытой коробке, RadioMaster Pocket ELRS 2.4 ГГц, BETAFPV VR04, 2×18650, упаковка 1S LiHV-батарей и BETAFPV 6 Ports 1S Charger. Количество 1S-батарей нужно прочитать на упаковке.",
+    attributes: [
+      { name: "Уровень", value: "стартовый комплект" },
+      { name: "Дрон", value: "BETAFPV Air Series — модель, видео и приёмник требуют сверки" },
+      { name: "Аппаратура", value: "RadioMaster Pocket ELRS 2.4 ГГц" },
+      { name: "Очки/шлем", value: "BETAFPV VR04, аналог 5.8 ГГц" },
+      { name: "Видео", value: "аналоговое" },
+    ],
+    sources: [
+      official("BETAFPV — Air65 II", "https://betafpv.com/products/air65-ii-brushless-whoop-quadcopter"),
+      official("BETAFPV — Air75 II", "https://betafpv.com/products/air75-ii-brushless-whoop-quadcopter"),
+      official("RadioMaster — Pocket", "https://www.radiomasterrc.com/products/pocket-radio-controller-m2"),
+      official("BETAFPV — VR04", "https://betafpv.com/products/vr04-fpv-goggles"),
+    ],
+    status: "NEEDS_REVIEW",
+    reviewNote: "На фото Air Series, не Meteor75 Pro. Нужны боковая SKU-наклейка коробки дрона (модель, Analog/HD, ELRS) и этикетка синей упаковки с количеством/ёмкостью батарей.",
+  },
+  {
+    slug: "nabor-fpv-novichok-cifra-dji-o4",
+    name: "FPV-комплект: BETAFPV Meteor Series, RadioMaster Pocket и DJI Goggles N3",
+    summary: "Набор из закрытых коробок BETAFPV Meteor Series, RadioMaster Pocket и DJI Goggles N3; точную версию дрона и наличие O4 Air Unit нужно сверить.",
+    exactVariant: "BETAFPV Meteor Series (модель и O4/PNP требуют сверки) + RadioMaster Pocket + DJI Goggles N3",
+    description: "На фотографии достоверно видны три закрытые коробки: дрон серии BETAFPV Meteor, аппаратура RadioMaster Pocket и очки DJI Goggles N3. Лицевая сторона универсальной коробки Meteor не подтверждает конкретную модель, приёмник и наличие DJI O4 Air Unit. Если на боковой наклейке указан готовый Meteor75 Pro O4 ELRS, очки примут цифровое видео O4, а Pocket будет управлять дроном через ExpressLRS 2.4 ГГц. До проверки наклейки заявлять готовность набора к полёту нельзя.",
+    compatibility: "Для полностью совместимого набора нужен готовый дрон Meteor O4 с ELRS 2.4 ГГц, а не PNP-версия без видеомодуля. Также потребуются подходящие 1S LiHV аккумуляторы, зарядка и два 18650 для Pocket. Точный разъём и ёмкость батареи зависят от модели дрона и должны быть определены после сверки коробки.",
+    packageContents: "На фото подтверждены три закрытые коробки: Meteor Series, RadioMaster Pocket и DJI Goggles N3. Батареи 1S, зарядка и 2×18650 на фотографии отсутствуют и не входят, пока не будут явно подтверждены в заказе.",
+    attributes: [
+      { name: "Уровень", value: "цифровой стартовый комплект" },
+      { name: "Дрон", value: "BETAFPV Meteor Series — модель/O4/PNP требуют сверки" },
+      { name: "Аппаратура", value: "RadioMaster Pocket ELRS 2.4 ГГц" },
+      { name: "Очки", value: "DJI Goggles N3" },
+      { name: "Видео", value: "DJI O4 — наличие Air Unit в дроне требует сверки" },
+    ],
+    sources: [
+      official("BETAFPV — Meteor75 Pro O4", "https://betafpv.com/products/meteor75-pro-o4-brushless-whoop-quadcopter"),
+      official("RadioMaster — Pocket", "https://www.radiomasterrc.com/products/pocket-radio-controller-m2"),
+      official("DJI — Goggles N3", "https://www.dji.com/goggles-n3/specs"),
+    ],
+    status: "NEEDS_REVIEW",
+    reviewNote: "Универсальная коробка Meteor Series на фото не показывает модель, приёмник и O4/PNP. Нужна боковая SKU-наклейка. Батареи и зарядка на фото отсутствуют.",
+  },
+];

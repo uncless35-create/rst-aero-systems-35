@@ -22,7 +22,13 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    // Для товаров с вариантами нужен выбор — открываем быстрый просмотр
+    if (product.requiresConfirmation) {
+      window.dispatchEvent(new CustomEvent("rst:open-manager-chat", {
+        detail: { draft: `Здравствуйте! Уточните, пожалуйста, точную версию товара «${product.name}» перед заказом.` },
+      }));
+      return;
+    }
+    // Для товаров с вариантами нужен выбор — открываем быстрый просмотр.
     if (product.hasVariants) {
       setQuickOpen(true);
       return;
@@ -46,6 +52,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
 
   const buyLabel = added
     ? "В корзине"
+    : product.requiresConfirmation
+      ? "Уточнить версию"
     : product.outOfStock
       ? "Временно нет"
       : !product.inStock
@@ -78,7 +86,9 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
 
         <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1">
           {product.badge ? <Badge variant="dark">{product.badge}</Badge> : null}
-          {product.outOfStock ? (
+          {product.requiresConfirmation ? (
+            <Badge variant="muted">Версию уточнит менеджер</Badge>
+          ) : product.outOfStock ? (
             <Badge variant="muted">Временно нет в наличии</Badge>
           ) : !product.inStock ? (
             <Badge variant="muted">Нет в наличии</Badge>
@@ -99,6 +109,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
               image: product.image,
               inStock: product.inStock,
               hasVariants: product.hasVariants,
+              requiresConfirmation: product.requiresConfirmation,
             }}
           />
         </div>
@@ -126,7 +137,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
         <button
           type="button"
           onClick={handleAdd}
-          disabled={!product.inStock}
+          disabled={!product.inStock && !product.requiresConfirmation}
           className={cn(buttonVariants({ size: "sm" }), "w-full gap-1.5")}
         >
           {added ? <Check className="size-4" /> : <ShoppingBag className="size-4" />}

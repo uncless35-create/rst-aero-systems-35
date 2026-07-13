@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CDEK_TARIFFS } from "@/lib/cdek-options";
 
 // Виджет СДЭК (карта ПВЗ + расчёт стоимости). Скрипт грузится с CDN,
 // бэкенд-запросы идут через наш прокси /api/cdek (ключи СДЭК не попадают на клиент).
@@ -10,8 +11,6 @@ const WIDGET_SRC = "https://cdn.jsdelivr.net/npm/@cdek-it/widget@3";
 
 // Тарифы СДЭК: отгрузка со склада магазина.
 // office — до пункта выдачи (склад-склад), door — курьером до двери (склад-дверь).
-const TARIFFS = { office: [136, 234], door: [137, 233] };
-
 export type CdekSelection = {
   mode: "office" | "door";
   tariffCode: number;
@@ -72,6 +71,9 @@ function loadWidgetScript(): Promise<void> {
     s.addEventListener("error", () => reject(new Error("cdek script error")));
     document.body.appendChild(s);
   });
+  void scriptPromise.catch(() => {
+    scriptPromise = null;
+  });
   return scriptPromise;
 }
 
@@ -85,6 +87,8 @@ export function CdekWidget({
   const rootRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<CdekWidgetInstance | null>(null);
   const onSelectRef = useRef(onSelect);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
@@ -110,7 +114,7 @@ export function CdekWidget({
           defaultLocation: fromCity,
           lang: "rus",
           currency: "RUB",
-          tariffs: TARIFFS,
+          tariffs: CDEK_TARIFFS,
           goods: [{ width: 20, height: 10, length: 20, weight: weightKg }],
           onChoose(mode: "office" | "door", tariff: CdekTariff, point: CdekPoint) {
             const cityCode =
@@ -138,6 +142,7 @@ export function CdekWidget({
       })
       .catch((e) => {
         console.error("Виджет СДЭК не загрузился:", e);
+        if (!cancelled) setLoadError(true);
       });
 
     return () => {
@@ -150,13 +155,35 @@ export function CdekWidget({
       instanceRef.current = null;
     };
     // Пересоздаём виджет при изменении веса корзины
-  }, [apiKey, fromCity, weightKg]);
+  }, [apiKey, fromCity, retryKey, weightKg]);
 
   if (!apiKey) {
     return (
       <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
         Карта пунктов выдачи временно недоступна. Укажите адрес доставки в комментарии
         к заказу — рассчитаем стоимость и свяжемся с вами.
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+        <p className="font-medium">Не удалось загрузить карту СДЭК</p>
+        <p className="mt-1 text-muted-foreground">
+          Проверьте соединение и попробуйте ещё раз. Если карта остаётся недоступной,
+          выберите самовывоз или напишите менеджеру в чат.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoadError(false);
+            setRetryKey((value) => value + 1);
+          }}
+          className="mt-3 rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background"
+        >
+          Повторить загрузку
+        </button>
       </div>
     );
   }

@@ -11,12 +11,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ImageUploader, type ImageValue } from "@/components/admin/image-uploader";
 import { createProduct, updateProduct } from "@/actions/admin/products";
-import { rublesToKopecks, kopecksToRubles } from "@/lib/money";
+import { rublesToKopecks } from "@/lib/money";
 
 type CategoryOption = { id: string; name: string };
 
 type VariantForm = { id?: string; name: string; priceRub: string; stockQty: number; sku: string };
 type AttrForm = { name: string; value: string };
+type SourceForm = {
+  label: string;
+  url: string;
+  type: "OFFICIAL_PRODUCT" | "OFFICIAL_MANUAL" | "DISTRIBUTOR" | "OTHER";
+};
 
 export type ProductFormInitial = {
   id: string;
@@ -24,6 +29,13 @@ export type ProductFormInitial = {
   slug: string;
   categoryId: string;
   description: string;
+  summary: string;
+  exactVariant: string;
+  compatibility: string;
+  packageContents: string;
+  contentStatus: "DRAFT" | "NEEDS_REVIEW" | "VERIFIED";
+  contentReviewNote: string;
+  sources: SourceForm[];
   priceRub: number;
   oldPriceRub: number | null;
   stockQty: number;
@@ -52,6 +64,13 @@ export function ProductForm({
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [summary, setSummary] = useState(initial?.summary ?? "");
+  const [exactVariant, setExactVariant] = useState(initial?.exactVariant ?? "");
+  const [compatibility, setCompatibility] = useState(initial?.compatibility ?? "");
+  const [packageContents, setPackageContents] = useState(initial?.packageContents ?? "");
+  const [contentStatus, setContentStatus] = useState<"DRAFT" | "NEEDS_REVIEW" | "VERIFIED">(initial?.contentStatus ?? "DRAFT");
+  const [contentReviewNote, setContentReviewNote] = useState(initial?.contentReviewNote ?? "");
+  const [sources, setSources] = useState<SourceForm[]>(initial?.sources ?? []);
   const [priceRub, setPriceRub] = useState<string>(initial ? String(initial.priceRub) : "");
   const [oldPriceRub, setOldPriceRub] = useState<string>(
     initial?.oldPriceRub ? String(initial.oldPriceRub) : ""
@@ -61,7 +80,7 @@ export function ProductForm({
     initial?.weightGrams != null ? String(initial.weightGrams) : ""
   );
   const [badge, setBadge] = useState(initial?.badge ?? "");
-  const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  const [isActive, setIsActive] = useState(initial?.isActive ?? false);
   const [outOfStock, setOutOfStock] = useState(initial?.outOfStock ?? false);
   const [isFeatured, setIsFeatured] = useState(initial?.isFeatured ?? false);
   const [variantLabel, setVariantLabel] = useState(initial?.variantLabel ?? "");
@@ -80,6 +99,13 @@ export function ProductForm({
       slug,
       categoryId,
       description,
+      summary,
+      exactVariant,
+      compatibility,
+      packageContents,
+      contentStatus,
+      contentReviewNote,
+      sources: sources.filter((source) => source.label.trim() && source.url.trim()),
       priceKopecks: rublesToKopecks(priceRub),
       oldPriceKopecks: oldPriceRub ? rublesToKopecks(oldPriceRub) : null,
       stockQty,
@@ -102,17 +128,22 @@ export function ProductForm({
         })),
     };
 
-    const res = initial
-      ? await updateProduct(initial.id, payload)
-      : await createProduct(payload);
-    setSaving(false);
+    try {
+      const res = initial
+        ? await updateProduct(initial.id, payload)
+        : await createProduct(payload);
 
-    if (res.ok) {
-      toast.success(initial ? "Товар обновлён" : "Товар создан");
-      router.push("/admin/products");
-      router.refresh();
-    } else {
-      toast.error(res.error);
+      if (res.ok) {
+        toast.success(initial ? "Товар обновлён" : "Товар создан");
+        router.push("/admin/products");
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    } catch {
+      toast.error("Не удалось сохранить товар");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -133,9 +164,61 @@ export function ProductForm({
             <Input id="p-slug" value={slug} placeholder="авто из названия" onChange={(e) => setSlug(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="p-desc">Описание</Label>
-            <Textarea id="p-desc" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Label htmlFor="p-summary">Краткое описание</Label>
+            <Textarea id="p-summary" rows={3} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Что это за товар и кому он подходит" />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-version">Точная версия</Label>
+            <Input id="p-version" value={exactVariant} onChange={(e) => setExactVariant(e.target.value)} placeholder="Напр. ELRS 2.4G, DJI O4 Pro, 6S" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-desc">Описание</Label>
+            <Textarea id="p-desc" rows={8} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-compat">Совместимость и что потребуется</Label>
+            <Textarea id="p-compat" rows={5} value={compatibility} onChange={(e) => setCompatibility(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-package">Комплектация</Label>
+            <Textarea id="p-package" rows={5} value={packageContents} onChange={(e) => setPackageContents(e.target.value)} />
+          </div>
+        </section>
+
+        <section className={card}>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Источники и проверка</h2>
+            <Button type="button" variant="surface" size="sm" onClick={() => setSources([...sources, { label: "", url: "", type: "OFFICIAL_PRODUCT" }])} className="gap-1">
+              <Plus className="size-4" /> Добавить
+            </Button>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-content-status">Статус информации</Label>
+            <select id="p-content-status" value={contentStatus} onChange={(event) => setContentStatus(event.target.value as typeof contentStatus)} className="h-12 w-full rounded-2xl border border-input bg-background px-4 text-sm">
+              <option value="DRAFT">Черновик</option>
+              <option value="NEEDS_REVIEW">Нужно подтвердить версию</option>
+              <option value="VERIFIED">Проверено</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="p-content-note">Что нужно проверить</Label>
+            <Textarea id="p-content-note" rows={3} value={contentReviewNote} onChange={(event) => setContentReviewNote(event.target.value)} placeholder="Внутренняя заметка — покупатель её не видит" />
+          </div>
+          {sources.map((source, index) => (
+            <div key={index} className="grid gap-2 rounded-2xl bg-surface p-3 sm:grid-cols-[1fr_140px_40px]">
+              <div className="space-y-2">
+                <Input placeholder="Название источника" value={source.label} onChange={(event) => setSources(sources.map((item, itemIndex) => itemIndex === index ? { ...item, label: event.target.value } : item))} />
+                <Input placeholder="https://…" value={source.url} onChange={(event) => setSources(sources.map((item, itemIndex) => itemIndex === index ? { ...item, url: event.target.value } : item))} />
+              </div>
+              <select value={source.type} onChange={(event) => setSources(sources.map((item, itemIndex) => itemIndex === index ? { ...item, type: event.target.value as SourceForm["type"] } : item))} className="h-12 rounded-2xl border border-input bg-background px-3 text-xs">
+                <option value="OFFICIAL_PRODUCT">Официальный товар</option>
+                <option value="OFFICIAL_MANUAL">Инструкция</option>
+                <option value="DISTRIBUTOR">Дистрибьютор</option>
+                <option value="OTHER">Другой</option>
+              </select>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setSources(sources.filter((_, itemIndex) => itemIndex !== index))}><X className="size-4" /></Button>
+            </div>
+          ))}
         </section>
 
         {/* Фото */}
@@ -259,7 +342,7 @@ export function ProductForm({
             <Switch id="p-oos" checked={outOfStock} onCheckedChange={setOutOfStock} />
           </div>
           <div className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3">
-            <Label htmlFor="p-featured">В «Хиты» на главной</Label>
+            <Label htmlFor="p-featured">В «Рекомендуем» на главной</Label>
             <Switch id="p-featured" checked={isFeatured} onCheckedChange={setIsFeatured} />
           </div>
         </section>

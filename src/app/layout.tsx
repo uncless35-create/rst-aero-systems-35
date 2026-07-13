@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import { YandexMetrica } from "@/components/analytics/yandex-metrica";
+import { AnalyticsConsent } from "@/components/analytics/analytics-consent";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s · RST AERO SYSTEMS",
   },
   description:
-    "Интернет-магазин RST AERO SYSTEMS: FPV-дроны, тинивупы, синевупы, запчасти и аппаратура. Доставка по России, оплата картой и СБП.",
+    "Интернет-магазин RST AERO SYSTEMS: FPV-дроны, тинивупы, синевупы, запчасти и аппаратура. Доставка по России и помощь с подбором совместимых компонентов.",
   keywords: [
     "FPV дрон", "купить FPV дрон", "тинивуп", "синевуп", "cinewhoop",
     "FPV очки", "аппаратура управления", "ELRS", "аккумулятор LiPo",
@@ -54,7 +54,7 @@ export default function RootLayout({
       <body className="min-h-full bg-background text-foreground">
         {children}
         <Toaster position="top-center" richColors />
-        <YandexMetrica />
+        <AnalyticsConsent />
       </body>
     </html>
   );

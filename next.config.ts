@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Supabase Storage (загрузка фото из админки)
       { protocol: "https", hostname: "*.supabase.co" },
+      // Официальное фото TX15 MAX, пока для фактической партии нет собственного снимка.
+      { protocol: "https", hostname: "radiomasterrc.com", pathname: "/cdn/shop/files/**" },
     ],
   },
   async headers() {
@@ -17,6 +19,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],

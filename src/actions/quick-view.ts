@@ -12,6 +12,7 @@ export type QuickViewData = {
   oldPriceKopecks: number | null;
   stockQty: number;
   outOfStock: boolean;
+  contentStatus: string;
   variantLabel: string | null;
   weightGrams: number | null;
   images: { url: string; alt: string | null }[];
@@ -39,6 +40,7 @@ export async function getQuickView(slug: string): Promise<QuickViewData | null> 
     oldPriceKopecks: p.oldPriceKopecks,
     stockQty: p.stockQty,
     outOfStock: p.outOfStock,
+    contentStatus: p.contentStatus,
     variantLabel: p.variantLabel,
     weightGrams: p.weightGrams,
     images: p.images.map((i) => ({ url: i.url, alt: i.alt })),

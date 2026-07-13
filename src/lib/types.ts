@@ -11,6 +11,7 @@ export type ProductCardData = {
   categoryName?: string;
   inStock: boolean;
   outOfStock: boolean; // «Временно нет в наличии» — флаг, товар виден, но купить нельзя
+  requiresConfirmation: boolean; // точная версия/комплект ещё не подтверждены
   hasVariants: boolean;
   stockQty: number; // для быстрого добавления в корзину с карточки (товары без вариантов)
   weightGrams: number | null;
@@ -41,4 +42,6 @@ export type FavoriteItem = {
   image: string | null;
   inStock: boolean;
   hasVariants: boolean;
+  /** Старые записи localStorage могут не иметь поля — тогда считаем товар неподтверждённым. */
+  requiresConfirmation?: boolean;
 };

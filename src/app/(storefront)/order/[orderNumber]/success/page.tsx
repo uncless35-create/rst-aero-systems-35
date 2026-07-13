@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { PaymentPoller } from "@/components/storefront/payment-poller";
 import { OrderGoal } from "@/components/analytics/order-goal";
 import { getTbankState, mapTbankStatus } from "@/lib/tbank";
+import { getPayment, mapPaymentStatus } from "@/lib/yookassa";
+import { applyOrderPaymentState } from "@/lib/order-payment";
 import { formatRub } from "@/lib/money";
+import { auth } from "@/lib/auth";
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -16,7 +19,10 @@ import {
   type PaymentStatus,
 } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Заказ оформлен" };
+export const metadata: Metadata = {
+  title: "Заказ оформлен",
+  robots: { index: false, follow: false },
+};
 
 // Всегда свежие данные (статус оплаты меняется), без кеша
 export const revalidate = 0;
@@ -24,12 +30,22 @@ export const revalidate = 0;
 type Params = Promise<{ orderNumber: string }>;
 
 export default async function OrderSuccessPage({ params }: { params: Params }) {
-  const { orderNumber } = await params;
-  const num = Number(orderNumber);
-  if (!Number.isInteger(num)) notFound();
+  // Новые гостевые ссылки используют непредсказуемый accessToken. Исторические
+  // ссылки с порядковым номером разрешены только вошедшему владельцу заказа.
+  const { orderNumber: orderRef } = await params;
+  if (!orderRef || orderRef.length > 128) notFound();
+  const session = await auth();
+  const legacyOrderNumber = /^\d+$/.test(orderRef) ? Number(orderRef) : null;
 
-  const order = await prisma.order.findUnique({
-    where: { orderNumber: num },
+  const order = await prisma.order.findFirst({
+    where: {
+      OR: [
+        { accessToken: orderRef },
+        ...(legacyOrderNumber !== null && session?.user?.id
+          ? [{ orderNumber: legacyOrderNumber, userId: session.user.id }]
+          : []),
+      ],
+    },
     include: { items: true, deliveryMethod: true },
   });
   if (!order) notFound();
@@ -45,15 +61,43 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
       if (status) {
         const mapped = mapTbankStatus(status);
         if (mapped.paymentStatus !== order.paymentStatus) {
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              paymentStatus: mapped.paymentStatus,
-              ...(mapped.orderStatus ? { status: mapped.orderStatus } : {}),
-            },
+          const applied = await applyOrderPaymentState({
+            orderId: order.id,
+            paymentStatus: mapped.paymentStatus,
+            orderStatus: mapped.orderStatus,
           });
-          order.paymentStatus = mapped.paymentStatus;
-          if (mapped.orderStatus) order.status = mapped.orderStatus;
+          if (applied) {
+            order.paymentStatus = applied.paymentStatus;
+            order.status = applied.orderStatus;
+          }
+        }
+      }
+    } catch {
+      // не критично — статус подтянется вебхуком или при следующем обновлении
+    }
+  }
+
+  // Та же подстраховка для ЮKassa: подтверждённый статус берём только из API.
+  if (
+    order.yookassaPaymentId &&
+    order.paymentStatus !== "SUCCEEDED" &&
+    order.paymentStatus !== "CANCELLED"
+  ) {
+    try {
+      const payment = await getPayment(order.yookassaPaymentId);
+      if (!payment.metadata?.orderId || payment.metadata.orderId === order.id) {
+        const mapped = mapPaymentStatus(payment.status);
+        if (mapped.paymentStatus !== order.paymentStatus) {
+          const applied = await applyOrderPaymentState({
+            orderId: order.id,
+            yookassaPaymentId: payment.id,
+            paymentStatus: mapped.paymentStatus,
+            orderStatus: mapped.orderStatus,
+          });
+          if (applied) {
+            order.paymentStatus = applied.paymentStatus;
+            order.status = applied.orderStatus;
+          }
         }
       }
     } catch {

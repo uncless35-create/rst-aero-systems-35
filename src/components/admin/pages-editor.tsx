@@ -10,7 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateSiteContent } from "@/actions/admin/pages";
 
-export type PageContent = { key: string; label: string; title: string; body: string };
+export type PageContent = {
+  key: "about" | "delivery-payment" | "contacts";
+  label: string;
+  title: string;
+  body: string;
+};
 
 function Editor({ page }: { page: PageContent }) {
   const router = useRouter();

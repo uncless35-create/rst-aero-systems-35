@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -52,15 +53,14 @@ export function CheckoutForm({
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { deliveryMethodId: deliveryMethods[0]?.id ?? "" },
   });
 
-  const selectedDeliveryId = watch("deliveryMethodId");
+  const selectedDeliveryId = useWatch({ control, name: "deliveryMethodId" });
   const selectedDelivery = deliveryMethods.find((d) => d.id === selectedDeliveryId);
   // Виджет СДЭК включается только когда есть И ключ карт (клиент), И боевые ключи API СДЭК
   // (сервер, cdekReady). Иначе метод «СДЭК» работает как обычный (адрес + фиксированная цена) —
@@ -84,8 +84,6 @@ export function CheckoutForm({
     setCdek(null);
   }
 
-  const summary = useMemo(() => items, [items]);
-
   async function onSubmit(values: FormValues) {
     if (items.length === 0) {
       toast.error("Корзина пуста");
@@ -106,38 +104,42 @@ export function CheckoutForm({
     }
 
     setSubmitting(true);
-    const result = await createOrder({
-      ...values,
-      // Для СДЭК адрес — из выбора на карте (с городом); иначе — из поля формы
-      deliveryAddress: isCdek ? cdekAddress : values.deliveryAddress,
-      cdek: isCdek && cdek
-        ? {
-            mode: cdek.mode,
-            tariffCode: cdek.tariffCode,
-            cityCode: cdek.cityCode,
-            pvzCode: cdek.pvzCode,
-            deliverySumKopecks: cdek.deliverySumKopecks,
-          }
-        : undefined,
-      items: items.map((i) => ({
-        productId: i.productId,
-        variantId: i.variantId,
-        quantity: i.quantity,
-      })),
-    });
-    setSubmitting(false);
+    try {
+      const result = await createOrder({
+        ...values,
+        // Для СДЭК адрес — из выбора на карте (с городом); иначе — из поля формы
+        deliveryAddress: isCdek ? cdekAddress : values.deliveryAddress,
+        cdek: isCdek && cdek
+          ? {
+              mode: cdek.mode,
+              tariffCode: cdek.tariffCode,
+              cityCode: cdek.cityCode,
+              pvzCode: cdek.pvzCode,
+              deliverySumKopecks: cdek.deliverySumKopecks,
+            }
+          : undefined,
+        items: items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          quantity: i.quantity,
+        })),
+      });
 
-    if (result.ok) {
-      clear();
-      if (result.confirmationUrl) {
-        // Переходим на защищённую страницу оплаты ЮKassa
-        window.location.href = result.confirmationUrl;
-        return;
+      if (result.ok) {
+        clear();
+        if (result.confirmationUrl) {
+          window.location.assign(result.confirmationUrl);
+          return;
+        }
+        toast.success("Заказ оформлен");
+        router.push(`/order/${encodeURIComponent(result.accessToken)}/success`);
+      } else {
+        toast.error(result.error);
       }
-      toast.success("Заказ оформлен");
-      router.push(`/order/${result.orderNumber}/success`);
-    } else {
-      toast.error(result.error);
+    } catch {
+      toast.error("Не удалось связаться с сервером. Повторите попытку.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -153,6 +155,14 @@ export function CheckoutForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-[1fr_380px]">
+      <input
+        type="text"
+        {...register("website")}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+      />
       {/* Данные покупателя */}
       <div className="space-y-6">
         <section className="space-y-4">
@@ -201,7 +211,7 @@ export function CheckoutForm({
                   </div>
                 </div>
                 <span className="text-sm font-semibold">
-                  {d.provider === "CDEK"
+                  {d.provider === "CDEK" && cdekEnabled
                     ? "по тарифу"
                     : d.priceKopecks === 0
                       ? "Бесплатно"
@@ -262,7 +272,7 @@ export function CheckoutForm({
           <h2 className="text-lg font-semibold">Ваш заказ</h2>
           <div className="mt-4 space-y-3">
             {hydrated &&
-              summary.map((i) => (
+              items.map((i) => (
                 <div key={i.key} className="flex justify-between gap-3 text-sm">
                   <span className="min-w-0">
                     <span className="line-clamp-1">{i.name}</span>
@@ -297,9 +307,14 @@ export function CheckoutForm({
           <Button type="submit" size="lg" className="mt-5 w-full" disabled={submitting}>
             {submitting ? <Loader2 className="size-5 animate-spin" /> : "Оформить заказ"}
           </Button>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности.
-          </p>
+          <label className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+            <input type="checkbox" {...register("privacyAccepted")} className="mt-0.5 size-4 shrink-0 accent-primary" />
+            <span>
+              Я соглашаюсь с обработкой персональных данных согласно{" "}
+              <Link href="/privacy" target="_blank" className="underline underline-offset-2">политике конфиденциальности</Link>.
+            </span>
+          </label>
+          {errors.privacyAccepted && <p className="mt-2 text-xs text-destructive">{errors.privacyAccepted.message}</p>}
         </div>
       </div>
     </form>

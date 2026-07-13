@@ -18,17 +18,24 @@ export function QuickView({
   onOpenChange: (v: boolean) => void;
 }) {
   const [data, setData] = useState<QuickViewData | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!open || data) return;
+    if (!open || data || failed) return;
     let cancelled = false;
-    getQuickView(slug).then((d) => {
-      if (!cancelled) setData(d);
-    });
+    getQuickView(slug)
+      .then((result) => {
+        if (cancelled) return;
+        if (result) setData(result);
+        else setFailed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [open, slug, data]);
+  }, [open, slug, data, failed]);
 
   // Пока открыто и данные ещё не пришли — показываем загрузку
   const loading = open && !data;
@@ -36,7 +43,11 @@ export function QuickView({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        {loading || !data ? (
+        {failed ? (
+          <div className="grid h-64 place-items-center px-6 text-center text-sm text-muted-foreground">
+            Не удалось загрузить товар. Откройте его полную страницу или повторите позже.
+          </div>
+        ) : loading || !data ? (
           <div className="grid h-64 place-items-center">
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
@@ -57,6 +68,7 @@ export function QuickView({
                   oldPriceKopecks: data.oldPriceKopecks,
                   stockQty: data.stockQty,
                   outOfStock: data.outOfStock,
+                  requiresConfirmation: data.contentStatus !== "VERIFIED",
                   variantLabel: data.variantLabel,
                   image: data.images[0]?.url ?? null,
                   weightGrams: data.weightGrams,

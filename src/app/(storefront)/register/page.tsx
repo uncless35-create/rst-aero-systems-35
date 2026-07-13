@@ -24,27 +24,30 @@ export default function RegisterPage() {
 
   async function onSubmit(values: RegisterInput) {
     setSubmitting(true);
-    const res = await registerUser(values);
-    if (!res.ok) {
-      setSubmitting(false);
-      toast.error(res.error);
-      return;
-    }
-    // Автоматический вход после регистрации
-    const signInRes = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
-    setSubmitting(false);
+    try {
+      const res = await registerUser(values);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      const signInRes = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
 
-    if (signInRes?.error) {
-      toast.success("Аккаунт создан. Войдите в систему.");
-      router.push("/login");
-    } else {
-      toast.success("Добро пожаловать!");
-      router.push("/account");
-      router.refresh();
+      if (signInRes?.error) {
+        toast.success("Аккаунт создан. Войдите в систему.");
+        router.push("/login");
+      } else {
+        toast.success("Добро пожаловать!");
+        router.push("/account");
+        router.refresh();
+      }
+    } catch {
+      toast.error("Не удалось завершить регистрацию. Повторите попытку.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -54,6 +57,14 @@ export default function RegisterPage() {
       <p className="mt-1 text-sm text-muted-foreground">Создайте аккаунт, чтобы отслеживать заказы.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+        <input
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+          {...register("website")}
+        />
         <div className="space-y-2">
           <Label htmlFor="name">Имя</Label>
           <Input id="name" autoComplete="name" {...register("name")} />
@@ -74,6 +85,14 @@ export default function RegisterPage() {
           <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
           {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
         </div>
+        <label className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+          <input type="checkbox" {...register("privacyAccepted")} className="mt-0.5 size-4 shrink-0 accent-primary" />
+          <span>
+            Я соглашаюсь с обработкой персональных данных согласно{" "}
+            <Link href="/privacy" target="_blank" className="underline underline-offset-2">политике конфиденциальности</Link>.
+          </span>
+        </label>
+        {errors.privacyAccepted && <p className="text-xs text-destructive">{errors.privacyAccepted.message}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
           {submitting ? <Loader2 className="size-5 animate-spin" /> : "Создать аккаунт"}
         </Button>

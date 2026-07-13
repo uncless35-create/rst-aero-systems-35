@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         // Приватные/служебные разделы не индексируем
-        disallow: ["/admin", "/account", "/api", "/checkout", "/cart"],
+        disallow: ["/admin", "/account", "/api", "/checkout", "/cart", "/order"],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

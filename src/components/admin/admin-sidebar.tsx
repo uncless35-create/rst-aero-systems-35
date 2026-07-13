@@ -9,6 +9,7 @@ import {
   FolderTree,
   Truck,
   ShoppingCart,
+  MessagesSquare,
   FileText,
   LogOut,
   ExternalLink,
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/admin/categories", label: "Категории", icon: FolderTree },
   { href: "/admin/delivery-methods", label: "Доставка", icon: Truck },
   { href: "/admin/orders", label: "Заказы", icon: ShoppingCart },
+  { href: "/admin/chats", label: "Чаты", icon: MessagesSquare },
   { href: "/admin/pages", label: "Страницы", icon: FileText },
 ];
 

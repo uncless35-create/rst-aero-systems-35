@@ -4,7 +4,7 @@ import { PagesEditor, type PageContent } from "@/components/admin/pages-editor";
 
 export const metadata = { title: "Страницы" };
 
-const PAGE_DEFS = [
+const PAGE_DEFS: { key: PageContent["key"]; label: string }[] = [
   { key: "about", label: "О компании" },
   { key: "delivery-payment", label: "Доставка и оплата" },
   { key: "contacts", label: "Контакты" },
