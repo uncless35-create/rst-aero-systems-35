@@ -37,7 +37,9 @@ export default async function AdminChatsPage() {
                   </div>
                   {conversation.product ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{conversation.product.name}</p> : null}
                   <p className="mt-2 truncate text-sm">{lastMessage?.body || "Без сообщений"}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{conversation.status === "OPEN" ? "Открыт" : "Закрыт"} · сообщений: {conversation._count.messages}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {conversation.telegramUserChatId ? "Telegram" : "Сайт"} · {conversation.status === "OPEN" ? "Открыт" : "Закрыт"} · сообщений: {conversation._count.messages}
+                  </p>
                 </div>
               </div>
             </Link>

@@ -3,10 +3,12 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Loader2, MessageCircle, Send, X } from "lucide-react";
+import { ArrowUpRight, Loader2, MessageCircle, Send, X } from "lucide-react";
+import { TelegramIcon } from "@/components/storefront/telegram-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { telegramBotUrl } from "@/lib/telegram-link";
 import { cn } from "@/lib/utils";
 
 const TOKEN_KEY = "rst-manager-chat-token";
@@ -32,6 +34,8 @@ export function ManagerChat() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  // С токеном диалога бот подхватит переписку, начатую на сайте.
+  const telegramUrl = telegramBotUrl(token);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -155,6 +159,22 @@ export function ManagerChat() {
               <X className="size-5" />
             </Button>
           </header>
+
+          {telegramUrl ? (
+            <a
+              href={telegramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 border-b border-border bg-surface px-5 py-3 text-sm transition-colors hover:bg-surface-2"
+            >
+              <TelegramIcon className="size-5 shrink-0 text-[#2AABEE]" />
+              <span className="flex-1">
+                <span className="font-medium">Написать менеджеру в Telegram</span>
+                <span className="block text-xs text-muted-foreground">Ответим в мессенджере — не нужно держать вкладку открытой</span>
+              </span>
+              <ArrowUpRight className="size-4 shrink-0 text-muted-foreground" />
+            </a>
+          ) : null}
 
           <div className="flex-1 space-y-3 overflow-y-auto bg-surface px-4 py-4">
             {messages.length === 0 ? (

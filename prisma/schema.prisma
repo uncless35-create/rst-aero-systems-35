@@ -92,6 +92,10 @@ model ChatConversation {
   productId             String?
   product               Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
   telegramRootMessageId String?
+  /// Личный чат покупателя с ботом (если он пишет из Telegram, а не с сайта).
+  /// Заполнен — ответы менеджера уходят покупателю в Telegram.
+  telegramUserChatId    String?       @unique
+  telegramUsername      String?
   privacyAcceptedAt     DateTime?
   privacyPolicyVersion  String?
   lastMessageAt         DateTime      @default(now())

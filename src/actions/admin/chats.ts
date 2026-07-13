@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/admin";
+import { deliverManagerReplyToCustomer } from "@/lib/chat";
 import { prisma } from "@/lib/prisma";
 
 export async function replyToChat(conversationId: string, rawBody: string) {
@@ -12,9 +13,15 @@ export async function replyToChat(conversationId: string, rawBody: string) {
 
   const conversation = await prisma.chatConversation.findUnique({
     where: { id: conversationId },
-    select: { id: true },
+    select: { id: true, telegramUserChatId: true },
   });
   if (!conversation) return { ok: false as const, error: "Диалог не найден" };
+
+  // Покупателю из Telegram ответ нужно доставить в бот; с сайта — его заберёт виджет.
+  const deliveryStatus = await deliverManagerReplyToCustomer(conversation, body);
+  if (deliveryStatus === "FAILED") {
+    return { ok: false as const, error: "Telegram недоступен, ответ не отправлен. Попробуйте ещё раз." };
+  }
 
   await prisma.$transaction([
     prisma.chatMessage.create({
@@ -22,7 +29,7 @@ export async function replyToChat(conversationId: string, rawBody: string) {
         conversationId,
         sender: "MANAGER",
         body,
-        deliveryStatus: "SKIPPED",
+        deliveryStatus: deliveryStatus === "DELIVERED" ? "DELIVERED" : "SKIPPED",
       },
     }),
     prisma.chatConversation.update({

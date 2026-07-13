@@ -1,11 +1,18 @@
 import { createHash } from "node:crypto";
 
-// Уведомления владельцу в Telegram (например, о новом заказе).
+// Общение через Telegram-бота: уведомления владельцу (заказы, сообщения с сайта)
+// и переписка с покупателем, который написал боту напрямую.
 // Активируется переменными окружения TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.
 // Без них — тихо ничего не делает (заказ оформляется как обычно).
 
 export function isTelegramConfigured(): boolean {
   return !!process.env.TELEGRAM_BOT_TOKEN && !!process.env.TELEGRAM_CHAT_ID;
+}
+
+/** Логин бота без «@» — нужен для ссылки t.me на витрине. */
+export function getTelegramBotUsername(): string | null {
+  const username = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "");
+  return username || null;
 }
 
 /** Секрет webhook: явный из env либо стабильный хеш токена бота. */
@@ -30,15 +37,15 @@ type TelegramSendOptions = {
 };
 
 /**
- * Отправить сообщение владельцу и вернуть Telegram message_id.
+ * Отправить сообщение в произвольный чат бота и вернуть Telegram message_id.
  * Не бросает исключений: сообщение покупателя уже сохранено в БД и не потеряется.
  */
-export async function sendTelegramMessage(
+export async function sendTelegramTo(
+  chatId: string,
   text: string,
   options: TelegramSendOptions = {},
 ): Promise<TelegramSendResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return { ok: false, error: "Telegram не настроен" };
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -77,6 +84,16 @@ export async function sendTelegramMessage(
     console.error("Telegram:", e);
     return { ok: false, error: "Telegram недоступен" };
   }
+}
+
+/** Отправить сообщение владельцу магазина (чат из TELEGRAM_CHAT_ID). */
+export async function sendTelegramMessage(
+  text: string,
+  options: TelegramSendOptions = {},
+): Promise<TelegramSendResult> {
+  const ownerChatId = process.env.TELEGRAM_CHAT_ID;
+  if (!ownerChatId) return { ok: false, error: "Telegram не настроен" };
+  return sendTelegramTo(ownerChatId, text, options);
 }
 
 /** Совместимый помощник для уведомлений о заказах. */

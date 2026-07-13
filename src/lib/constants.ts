@@ -48,6 +48,8 @@ export const SITE = {
   tagline: "FPV-дроны, тинивупы и комплектующие",
   phone: "+7 (988) 652-22-52",
   email: "rst-aero@mail.ru",
+  /** Логин бота для чата с менеджером; переопределяется NEXT_PUBLIC_TELEGRAM_BOT_USERNAME. */
+  telegramBot: "rst_aero_bot",
 };
 
 /** Характеристика товара (хранится в Product.attributes как JSON). */

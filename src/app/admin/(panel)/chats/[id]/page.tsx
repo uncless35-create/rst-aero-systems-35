@@ -31,6 +31,11 @@ export default async function AdminChatPage({ params }: { params: Params }) {
             {conversation.customerContact ? <p className="mt-1 text-sm">{conversation.customerContact}</p> : null}
             {conversation.product ? <Link href={`/product/${conversation.product.slug}`} target="_blank" className="mt-1 block text-sm text-muted-foreground hover:text-foreground">{conversation.product.name}</Link> : null}
             {conversation.pagePath ? <p className="mt-1 text-xs text-muted-foreground">Страница: {conversation.pagePath}</p> : null}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {conversation.telegramUserChatId
+                ? "Покупатель пишет из Telegram — ответ придёт ему в бот"
+                : "Чат на сайте — ответ появится в виджете"}
+            </p>
           </div>
           <span className="rounded-full bg-surface px-3 py-1 text-xs">{conversation.status === "OPEN" ? "Открыт" : "Закрыт"}</span>
         </div>

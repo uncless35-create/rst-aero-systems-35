@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { ChatConversation, ChatMessage } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   escapeHtml,
   isTelegramConfigured,
   sendTelegramMessage,
+  sendTelegramTo,
 } from "@/lib/telegram";
 import type { CustomerChatMessageInput } from "@/lib/validation/chat";
 import { PRIVACY_POLICY_VERSION } from "@/lib/privacy";
@@ -169,6 +171,171 @@ async function deliverCustomerChatMessage(
       }
     });
   }
+}
+
+/** Приветствие, которое бот шлёт покупателю на /start. */
+export const TELEGRAM_GREETING = [
+  "<b>RST AERO SYSTEMS</b>",
+  "",
+  "Здравствуйте! Это чат с менеджером магазина. Напишите вопрос о товаре, совместимости, доставке или заказе — ответим здесь же, в Telegram.",
+  "",
+  "<i>Отправляя сообщение, вы соглашаетесь на обработку персональных данных. Не отправляйте данные банковских карт и пароли.</i>",
+].join("\n");
+
+/**
+ * Сообщение покупателя, пришедшее боту в личный чат.
+ * Диалог тот же, что и на сайте: если покупатель пришёл по ссылке из виджета
+ * (deep-link со своим publicToken), Telegram-чат привязывается к начатой переписке.
+ */
+export async function handleTelegramCustomerMessage(input: {
+  telegramChatId: string;
+  updateId: string;
+  body: string;
+  firstName?: string;
+  username?: string;
+  startPayload?: string;
+}) {
+  const conversation = await findOrCreateTelegramConversation(input);
+
+  const message = await prisma.chatMessage.create({
+    data: {
+      conversationId: conversation.id,
+      sender: "CUSTOMER",
+      body: input.body,
+      deliveryStatus: "PENDING",
+      telegramUpdateId: input.updateId,
+    },
+  });
+
+  const product = conversation.productId
+    ? await prisma.product.findUnique({
+        where: { id: conversation.productId },
+        select: { name: true },
+      })
+    : null;
+
+  const lines = [
+    `<b>💬 Сообщение из Telegram · чат ${chatLabel(conversation.id)}</b>`,
+    conversation.customerName ? `<b>Имя:</b> ${escapeHtml(conversation.customerName)}` : null,
+    conversation.telegramUsername ? `<b>Контакт:</b> @${escapeHtml(conversation.telegramUsername)}` : null,
+    product ? `<b>Товар:</b> ${escapeHtml(product.name)}` : null,
+    "",
+    escapeHtml(input.body),
+    "",
+    "<i>Ответьте на это сообщение — ответ придёт покупателю в Telegram.</i>",
+  ].filter((line): line is string => line !== null);
+
+  const sent = await sendTelegramMessage(lines.join("\n"), {
+    replyToMessageId: conversation.telegramRootMessageId,
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.chatMessage.update({
+      where: { id: message.id },
+      data: sent.ok
+        ? { deliveryStatus: "DELIVERED", telegramMessageId: sent.messageId }
+        : { deliveryStatus: isTelegramConfigured() ? "FAILED" : "SKIPPED" },
+    });
+    await tx.chatConversation.update({
+      where: { id: conversation.id },
+      data: {
+        status: "OPEN",
+        lastMessageAt: new Date(),
+        ...(sent.ok && !conversation.telegramRootMessageId
+          ? { telegramRootMessageId: sent.messageId }
+          : {}),
+      },
+    });
+  });
+}
+
+/** /start от покупателя: завести (или подхватить) диалог до первого сообщения. */
+export async function startTelegramConversation(input: {
+  telegramChatId: string;
+  firstName?: string;
+  username?: string;
+  startPayload?: string;
+}) {
+  await findOrCreateTelegramConversation(input);
+  await sendTelegramTo(input.telegramChatId, TELEGRAM_GREETING);
+}
+
+async function findOrCreateTelegramConversation(input: {
+  telegramChatId: string;
+  firstName?: string;
+  username?: string;
+  startPayload?: string;
+}): Promise<ChatConversation> {
+  const existing = await prisma.chatConversation.findUnique({
+    where: { telegramUserChatId: input.telegramChatId },
+  });
+  const profile = {
+    telegramUsername: input.username || null,
+    ...(input.firstName ? { customerName: input.firstName } : {}),
+    ...(input.username ? { customerContact: `@${input.username}` } : {}),
+  };
+
+  if (existing) {
+    return prisma.chatConversation.update({ where: { id: existing.id }, data: profile });
+  }
+
+  // Покупатель пришёл по ссылке из виджета: подхватываем начатый на сайте диалог.
+  const fromWidget = input.startPayload
+    ? await prisma.chatConversation.findFirst({
+        where: { publicToken: input.startPayload, telegramUserChatId: null },
+      })
+    : null;
+
+  const data = {
+    ...profile,
+    telegramUserChatId: input.telegramChatId,
+    status: "OPEN",
+    lastMessageAt: new Date(),
+    privacyAcceptedAt: new Date(),
+    privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+  };
+
+  try {
+    if (fromWidget) {
+      return await prisma.chatConversation.update({
+        where: { id: fromWidget.id },
+        data: {
+          ...data,
+          ...(fromWidget.privacyAcceptedAt
+            ? { privacyAcceptedAt: fromWidget.privacyAcceptedAt }
+            : {}),
+        },
+      });
+    }
+    return await prisma.chatConversation.create({
+      data: { ...data, publicToken: randomUUID() },
+    });
+  } catch (error) {
+    // Гонка одновременных сообщений: диалог для этого чата уже создан соседним запросом.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const created = await prisma.chatConversation.findUnique({
+        where: { telegramUserChatId: input.telegramChatId },
+      });
+      if (created) return created;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Ответ менеджера покупателю, который пишет из Telegram.
+ * Для диалогов с сайта возвращает SKIPPED — там ответ забирает виджет.
+ */
+export async function deliverManagerReplyToCustomer(
+  conversation: Pick<ChatConversation, "telegramUserChatId">,
+  body: string,
+): Promise<"DELIVERED" | "FAILED" | "SKIPPED"> {
+  if (!conversation.telegramUserChatId) return "SKIPPED";
+  const sent = await sendTelegramTo(
+    conversation.telegramUserChatId,
+    `<b>Менеджер RST AERO:</b>\n\n${escapeHtml(body)}`,
+  );
+  return sent.ok ? "DELIVERED" : "FAILED";
 }
 
 export async function getChatHistory(publicToken: string) {
