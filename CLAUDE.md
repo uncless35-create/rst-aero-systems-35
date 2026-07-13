@@ -58,6 +58,14 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
 - **ЮKassa** ([src/lib/yookassa.ts](src/lib/yookassa.ts)): `createPayment`/`getPayment`. Вебхук
   [api/webhooks/yookassa](src/app/api/webhooks/yookassa/route.ts) **перепроверяет платёж по id**, идемпотентен,
   на обработанные случаи всегда 200. Если ключей нет — заказ оформляется без оплаты.
+- **Чат с менеджером** ([src/lib/chat.ts](src/lib/chat.ts)) — один `ChatConversation` на покупателя,
+  два входа: виджет на сайте и бот `@rst_aero_bot` (логин — `SITE.telegramBot`, переопределяется
+  `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`). Сообщения покупателя уходят владельцу карточкой в Telegram;
+  **ответ = реплай на эту карточку** (мэппинг по `ChatMessage.telegramMessageId`) либо ответ из админки.
+  Диалогу с `telegramUserChatId` ответ доставляется в бот покупателю, остальным — в виджет.
+  Ссылка из виджета несёт `?start=<publicToken>`, поэтому переписка, начатая на сайте, продолжается
+  в Telegram тем же диалогом. Вебхук [api/webhooks/telegram](src/app/api/webhooks/telegram/route.ts)
+  различает чат владельца (`TELEGRAM_CHAT_ID`) и покупателей, идемпотентен по `update_id`.
 - **Prisma singleton** — [src/lib/prisma.ts](src/lib/prisma.ts).
 - **Хранилища клиента** — [src/stores/](src/stores/); чтобы не рассинхронить SSR, компоненты со счётчиками
   используют [useHydrated()](src/lib/use-hydrated.ts).
