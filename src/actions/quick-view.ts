@@ -7,6 +7,8 @@ export type QuickViewData = {
   id: string;
   slug: string;
   name: string;
+  summary: string | null;
+  exactVariant: string | null;
   description: string | null;
   priceKopecks: number;
   oldPriceKopecks: number | null;
@@ -35,6 +37,8 @@ export async function getQuickView(slug: string): Promise<QuickViewData | null> 
     id: p.id,
     slug: p.slug,
     name: p.name,
+    summary: p.summary,
+    exactVariant: p.exactVariant,
     description: p.description,
     priceKopecks: p.priceKopecks,
     oldPriceKopecks: p.oldPriceKopecks,

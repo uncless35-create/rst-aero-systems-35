@@ -59,6 +59,16 @@ export function QuickView({
             <div className="space-y-4">
               <DialogTitle className="text-xl font-bold leading-tight">{data.name}</DialogTitle>
 
+              {data.summary ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">{data.summary}</p>
+              ) : null}
+
+              {data.exactVariant ? (
+                <p className="rounded-2xl bg-surface px-4 py-3 text-xs leading-relaxed">
+                  <span className="font-medium">Версия:</span> {data.exactVariant}
+                </p>
+              ) : null}
+
               <ProductPurchasePanel
                 product={{
                   id: data.id,
@@ -76,15 +86,9 @@ export function QuickView({
                 }}
               />
 
-              {data.description && (
-                <p className="line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-                  {data.description}
-                </p>
-              )}
-
               {data.attributes.length > 0 && (
-                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                  {data.attributes.slice(0, 5).map((a) => (
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+                  {data.attributes.slice(0, 6).map((a) => (
                     <div key={a.name} className="contents">
                       <dt className="text-muted-foreground">{a.name}</dt>
                       <dd className="text-right font-medium">{a.value}</dd>

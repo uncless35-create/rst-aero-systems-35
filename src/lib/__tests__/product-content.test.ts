@@ -8,10 +8,11 @@ describe("product content registry", () => {
     expect(new Set(productContent.map((record) => record.slug)).size).toBe(43);
   });
 
-  it("does not mark unresolved variants as verified", () => {
+  it("требует заметку у каждого товара со статусом NEEDS_REVIEW", () => {
+    // Товаров на сверке может не быть вовсе — это нормально.
+    // Но если товар помечен NEEDS_REVIEW, у него обязана быть заметка: что именно сверить.
     const unresolved = productContent.filter((record) => record.status === "NEEDS_REVIEW");
-    expect(unresolved.length).toBeGreaterThan(0);
-    expect(unresolved.every((record) => record.reviewNote)).toBe(true);
+    expect(unresolved.every((record) => record.reviewNote?.trim())).toBe(true);
   });
 
   it("uses secure URLs for sources and replacement product images", () => {

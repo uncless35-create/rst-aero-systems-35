@@ -136,17 +136,17 @@ export default async function ProductPage({ params }: { params: Params }) {
           </section>
         ) : null}
 
-        {product.compatibility ? (
-          <section>
-            <h2 className="text-xl font-semibold tracking-tight">Совместимость</h2>
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.compatibility}</p>
+        {product.packageContents ? (
+          <section className="rounded-3xl bg-surface p-6">
+            <h2 className="text-base font-semibold tracking-tight">Что в комплекте</h2>
+            <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.packageContents}</p>
           </section>
         ) : null}
 
-        {product.packageContents ? (
-          <section>
-            <h2 className="text-xl font-semibold tracking-tight">Комплектация</h2>
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.packageContents}</p>
+        {product.compatibility ? (
+          <section className="rounded-3xl bg-surface p-6">
+            <h2 className="text-base font-semibold tracking-tight">Совместимость и что докупить</h2>
+            <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground">{product.compatibility}</p>
           </section>
         ) : null}
 
