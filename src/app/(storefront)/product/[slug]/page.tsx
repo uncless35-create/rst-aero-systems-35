@@ -8,7 +8,7 @@ import { FavoriteButton } from "@/components/storefront/favorite-button";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Badge } from "@/components/ui/badge";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
-import { parseAttributes, parseProductSources } from "@/lib/constants";
+import { parseAttributes } from "@/lib/constants";
 
 type Params = Promise<{ slug: string }>;
 
@@ -30,7 +30,6 @@ export default async function ProductPage({ params }: { params: Params }) {
   if (!product) notFound();
 
   const attributes = parseAttributes(product.attributes);
-  const sources = parseProductSources(product.contentSources);
   const firstImage = product.images[0]?.url ?? null;
   const inStock = !product.outOfStock && (product.stockQty > 0 || product.variants.some((v) => v.stockQty > 0));
   const related = await getRelatedProducts(product.categoryId, product.id, 4);
@@ -150,18 +149,6 @@ export default async function ProductPage({ params }: { params: Params }) {
           </section>
         ) : null}
 
-        {sources.length > 0 ? (
-          <details className="rounded-2xl border border-border px-5 py-4 text-sm">
-            <summary className="cursor-pointer font-medium">Источники характеристик</summary>
-            <ul className="mt-3 space-y-2 text-muted-foreground">
-              {sources.map((source) => (
-                <li key={source.url}>
-                  <a href={source.url} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:text-foreground">{source.label}</a>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
       </div>
 
       {/* Похожие товары */}
