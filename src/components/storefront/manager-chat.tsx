@@ -244,16 +244,31 @@ export function ManagerChat() {
           </form>
         </section>
       ) : (
-        <Button
-          type="button"
-          size="lg"
-          onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-4 z-40 gap-2 shadow-xl md:bottom-6 md:right-6"
-          aria-label="Открыть чат с менеджером"
-        >
-          <MessageCircle className="size-5" />
-          <span className="hidden sm:inline">Задать вопрос</span>
-        </Button>
+        <div className="fixed bottom-24 right-4 z-40 flex flex-col items-end gap-2 md:bottom-6 md:right-6">
+          {telegramUrl ? (
+            <Button asChild variant="outline" size="lg" className="gap-2 shadow-xl">
+              <a
+                href={telegramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Написать менеджеру в Telegram"
+              >
+                <TelegramIcon className="size-5 text-[#2AABEE]" />
+                <span className="hidden sm:inline">Написать в Telegram</span>
+              </a>
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            size="lg"
+            onClick={() => setOpen(true)}
+            className="gap-2 shadow-xl"
+            aria-label="Открыть чат с менеджером"
+          >
+            <MessageCircle className="size-5" />
+            <span className="hidden sm:inline">Задать вопрос</span>
+          </Button>
+        </div>
       )}
     </>
   );
