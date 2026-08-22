@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CategoryGrid } from "@/components/storefront/category-grid";
+import { HeroFlight } from "@/components/storefront/hero-flight";
 import { Benefits } from "@/components/storefront/benefits";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,8 @@ export default async function HomePage() {
       <section className="pt-6">
         <div className="relative overflow-hidden rounded-[2rem] bg-primary px-6 py-12 text-primary-foreground sm:px-12 sm:py-16">
           <div className="absolute -right-16 -top-16 size-64 rounded-full bg-accent/20 blur-3xl" />
-          <div className="relative max-w-xl">
+          <HeroFlight />
+          <div className="hero-settle relative max-w-xl">
             <p className="mb-3 text-sm font-medium uppercase tracking-widest text-accent">
               RST AERO SYSTEMS
             </p>

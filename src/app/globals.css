@@ -117,3 +117,41 @@ body {
     animation: none;
   }
 }
+
+/*
+  Интро героя: надпись стоит сдвинутой к центру, пока дрон облетает её,
+  затем уезжает на своё место слева. Тайминг совпадает с окном HANDOFF
+  в [hero-flight-engine.ts]: переезд идёт с 3.4 с по 4.5 с.
+*/
+@keyframes hero-settle {
+  0%,
+  74% {
+    transform: translate3d(var(--hero-shift, 0px), 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.hero-settle {
+  animation: hero-settle 4.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* на узком экране текст занимает всю ширину — двигать его некуда */
+@media (min-width: 720px) {
+  .hero-settle {
+    --hero-shift: 170px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-settle {
+    animation: none;
+  }
+}
+
+/* Текст героя лежит поверх светящегося слоя — мягкая тень отделяет буквы от свечения */
+.hero-settle h1,
+.hero-settle p {
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.55);
+}
