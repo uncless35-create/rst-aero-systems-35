@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PaymentPoller } from "@/components/storefront/payment-poller";
 import { OrderGoal } from "@/components/analytics/order-goal";
+import { OrderAccountPrompt } from "@/components/storefront/order-account-prompt";
 import { getTbankState, mapTbankStatus } from "@/lib/tbank";
 import { getPayment, mapPaymentStatus } from "@/lib/yookassa";
 import { applyOrderPaymentState } from "@/lib/order-payment";
@@ -111,6 +112,18 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
     order.paymentStatus !== "SUCCEEDED" &&
     order.paymentStatus !== "CANCELLED";
 
+  // Гостевой заказ не попадает в «Мои заказы» сам — раньше покупатель регистрировался,
+  // видел пустой список и оформлял заказ повторно. Предлагаем привязать его к аккаунту.
+  const viewerId = session?.user?.id;
+  const accountPrompt: "guest" | "claim" | null = order.userId
+    ? null
+    : !viewerId
+      ? "guest"
+      : session?.user?.role === "CUSTOMER"
+        ? "claim"
+        : null;
+  const showMyOrders = Boolean(order.userId) && (!viewerId || viewerId === order.userId);
+
   return (
     <div className="mx-auto max-w-2xl px-4 pt-10">
       <PaymentPoller pollable={pollable} />
@@ -188,13 +201,23 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
         </div>
       )}
 
+      {accountPrompt && order.accessToken && (
+        <OrderAccountPrompt
+          accessToken={order.accessToken}
+          orderNumber={order.orderNumber}
+          mode={accountPrompt}
+        />
+      )}
+
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Button asChild variant="surface">
           <Link href="/catalog">Продолжить покупки</Link>
         </Button>
-        <Button asChild>
-          <Link href="/account/orders">Мои заказы</Link>
-        </Button>
+        {showMyOrders && (
+          <Button asChild>
+            <Link href="/account/orders">Мои заказы</Link>
+          </Button>
+        )}
       </div>
     </div>
   );

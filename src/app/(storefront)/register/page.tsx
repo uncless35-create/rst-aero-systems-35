@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
@@ -13,9 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSchema, type RegisterInput } from "@/lib/validation/auth";
 import { registerUser } from "@/actions/auth";
+import { claimGuestOrder } from "@/actions/orders";
+import { parseOrderToken } from "@/lib/order-token";
 
-export default function RegisterPage() {
+function RegisterInner() {
   const router = useRouter();
+  // Пришли со страницы гостевого заказа — после регистрации привязываем его к аккаунту.
+  const orderToken = parseOrderToken(useSearchParams().get("order"));
+  const loginHref = orderToken ? `/login?order=${encodeURIComponent(orderToken)}` : "/login";
   const [submitting, setSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterInput>({
@@ -38,7 +43,14 @@ export default function RegisterPage() {
 
       if (signInRes?.error) {
         toast.success("Аккаунт создан. Войдите в систему.");
-        router.push("/login");
+        router.push(loginHref);
+      } else if (orderToken) {
+        const claim = await claimGuestOrder(orderToken);
+        if (!claim.ok) toast.error(claim.error);
+        // Полная загрузка: после входа обновляется и шапка, и список заказов.
+        window.location.assign(
+          claim.ok ? "/account/orders" : `/order/${encodeURIComponent(orderToken)}/success`,
+        );
       } else {
         toast.success("Добро пожаловать!");
         router.push("/account");
@@ -54,7 +66,11 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-md px-4 pt-12">
       <h1 className="text-2xl font-bold tracking-tight">Регистрация</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Создайте аккаунт, чтобы отслеживать заказы.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {orderToken
+          ? "После регистрации оформленный заказ появится в разделе «Мои заказы»."
+          : "Создайте аккаунт, чтобы отслеживать заказы."}
+      </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
         <input
@@ -100,10 +116,18 @@ export default function RegisterPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Уже есть аккаунт?{" "}
-        <Link href="/login" className="font-medium text-foreground hover:underline">
+        <Link href={loginHref} className="font-medium text-foreground hover:underline">
           Войти
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterInner />
+    </Suspense>
   );
 }

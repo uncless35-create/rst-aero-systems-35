@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validation/auth";
+import { parseOrderToken } from "@/lib/order-token";
+import { claimGuestOrder } from "@/actions/orders";
 
 function LoginInner() {
   const router = useRouter();
@@ -21,6 +23,8 @@ function LoginInner() {
     requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
       ? requestedCallback
       : "/account";
+  // Пришли со страницы гостевого заказа — после входа привязываем его к аккаунту.
+  const orderToken = parseOrderToken(params.get("order"));
   const [submitting, setSubmitting] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginInput>({
@@ -38,6 +42,13 @@ function LoginInner() {
 
       if (res?.error) {
         toast.error("Неверный email или пароль");
+      } else if (orderToken) {
+        const claim = await claimGuestOrder(orderToken);
+        if (!claim.ok) toast.error(claim.error);
+        // Полная загрузка: после входа обновляется и шапка, и список заказов.
+        window.location.assign(
+          claim.ok ? "/account/orders" : `/order/${encodeURIComponent(orderToken)}/success`,
+        );
       } else {
         toast.success("Вы вошли");
         router.push(callbackUrl);
@@ -53,7 +64,11 @@ function LoginInner() {
   return (
     <div className="mx-auto max-w-md px-4 pt-12">
       <h1 className="text-2xl font-bold tracking-tight">Вход</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Войдите, чтобы видеть свои заказы.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {orderToken
+          ? "Войдите — оформленный заказ появится в разделе «Мои заказы»."
+          : "Войдите, чтобы видеть свои заказы."}
+      </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
         <div className="space-y-2">
@@ -73,7 +88,9 @@ function LoginInner() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Нет аккаунта?{" "}
-        <Link href="/register" className="font-medium text-foreground hover:underline">
+        <Link
+          href={orderToken ? `/register?order=${encodeURIComponent(orderToken)}` : "/register"}
+          className="font-medium text-foreground hover:underline">
           Зарегистрироваться
         </Link>
       </p>

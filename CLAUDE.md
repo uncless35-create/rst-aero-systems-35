@@ -40,7 +40,8 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
 `allowBuilds:` в [pnpm-workspace.yaml](pnpm-workspace.yaml). При добавлении нативной зависимости
 пропишите её там в `true`, иначе `pnpm install` завершится кодом 1 и `prisma generate` упадёт.
 
-**Админ (dev):** `admin@rst-aero.ru` / `admin12345` (из сида, задаётся `ADMIN_EMAIL`/`ADMIN_PASSWORD`).
+**Админ:** `admin@rst-aero.ru`, пароль — `ADMIN_PASSWORD` из `.env` (сид требует ≥12 символов; старый `admin12345` недействителен).
+После 5 неверных попыток вход по email блокируется на 15 минут с тем же текстом ошибки ([rate-limit.ts](src/lib/rate-limit.ts)).
 
 ## Архитектура (неочевидное)
 
@@ -66,6 +67,9 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   Ссылка из виджета несёт `?start=<publicToken>`, поэтому переписка, начатая на сайте, продолжается
   в Telegram тем же диалогом. Вебхук [api/webhooks/telegram](src/app/api/webhooks/telegram/route.ts)
   различает чат владельца (`TELEGRAM_CHAT_ID`) и покупателей, идемпотентен по `update_id`.
+- **Гостевые заказы** не видны в «Моих заказах», пока их не привяжут: страница заказа `/order/<accessToken>/success`
+  ведёт на `/register|login?order=<accessToken>`, после входа [claimGuestOrder](src/actions/orders.ts) ставит `userId`.
+  Право на заказ — только секретный `accessToken`; по email/телефону не привязываем (email не подтверждается).
 - **Prisma singleton** — [src/lib/prisma.ts](src/lib/prisma.ts).
 - **Хранилища клиента** — [src/stores/](src/stores/); чтобы не рассинхронить SSR, компоненты со счётчиками
   используют [useHydrated()](src/lib/use-hydrated.ts).

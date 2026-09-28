@@ -27,7 +27,7 @@ export default async function AccountOrdersPage() {
 
       <div className="mt-6">
         {orders.length === 0 ? (
-          <EmptyState icon={Package} title="Заказов пока нет" description="Оформите первый заказ в каталоге.">
+          <EmptyState icon={Package} title="Заказов пока нет" description="Заказ, оформленный без входа, сюда не попадает сам: откройте его страницу по ссылке и нажмите «Сохранить в моих заказах» или напишите менеджеру.">
             <Button asChild>
               <Link href="/catalog">В каталог</Link>
             </Button>
