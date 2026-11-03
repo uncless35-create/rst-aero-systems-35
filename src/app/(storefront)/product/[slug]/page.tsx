@@ -7,6 +7,7 @@ import { ProductPurchasePanel } from "@/components/storefront/product-purchase-p
 import { FavoriteButton } from "@/components/storefront/favorite-button";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Badge } from "@/components/ui/badge";
+import { JsonLd, absoluteUrl, schemaPrice } from "@/components/seo/json-ld";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { parseAttributes } from "@/lib/constants";
 
@@ -18,9 +19,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Товар не найден" };
+  const description = product.summary ?? product.description ?? undefined;
+  const image = product.images[0];
   return {
     title: product.name,
-    description: product.summary ?? product.description ?? undefined,
+    description,
+    alternates: { canonical: `/product/${product.slug}` },
+    openGraph: {
+      title: product.name,
+      description,
+      url: `/product/${product.slug}`,
+      images: image ? [{ url: image.url, alt: image.alt ?? product.name }] : undefined,
+    },
   };
 }
 
@@ -34,8 +44,42 @@ export default async function ProductPage({ params }: { params: Params }) {
   const inStock = !product.outOfStock && (product.stockQty > 0 || product.variants.some((v) => v.stockQty > 0));
   const related = await getRelatedProducts(product.categoryId, product.id, 4);
 
+  const url = absoluteUrl(`/product/${product.slug}`);
+  const prices = product.variants.length
+    ? product.variants.map((v) => v.priceKopecks ?? product.priceKopecks)
+    : [product.priceKopecks];
+  const availability = inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+  const offer =
+    Math.min(...prices) === Math.max(...prices)
+      ? { "@type": "Offer", price: schemaPrice(prices[0]), priceCurrency: "RUB", availability, url, itemCondition: "https://schema.org/NewCondition" }
+      : { "@type": "AggregateOffer", lowPrice: schemaPrice(Math.min(...prices)), highPrice: schemaPrice(Math.max(...prices)), offerCount: prices.length, priceCurrency: "RUB", availability, url };
+
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.summary ?? product.description ?? undefined,
+          image: product.images.map((i) => absoluteUrl(i.url)),
+          sku: product.slug,
+          category: product.category.name,
+          url,
+          offers: offer,
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Каталог", item: absoluteUrl("/catalog") },
+            { "@type": "ListItem", position: 2, name: product.category.name, item: absoluteUrl(`/catalog/${product.category.slug}`) },
+            { "@type": "ListItem", position: 3, name: product.name, item: url },
+          ],
+        }}
+      />
       {/* Хлебные крошки */}
       <nav className="flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/catalog" className="hover:text-foreground">Каталог</Link>

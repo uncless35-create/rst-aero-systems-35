@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CategoryGrid } from "@/components/storefront/category-grid";
@@ -5,6 +6,8 @@ import { HeroFlight } from "@/components/storefront/hero-flight";
 import { Benefits } from "@/components/storefront/benefits";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { Button } from "@/components/ui/button";
+import { JsonLd, absoluteUrl } from "@/components/seo/json-ld";
+import { SITE } from "@/lib/constants";
 import {
   getCategoriesWithImage,
   getFeaturedProducts,
@@ -14,6 +17,8 @@ import {
 
 // ISR: предрендер + обновление раз в 5 мин (и мгновенно через revalidateTag из админки)
 export const revalidate = 300;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function HomePage() {
   const [categories, featured, discounted, fresh] = await Promise.all([
@@ -25,6 +30,20 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Store",
+          name: SITE.name,
+          description: SITE.tagline,
+          url: absoluteUrl("/"),
+          telephone: SITE.phone,
+          email: SITE.email,
+          image: absoluteUrl("/category-covers/gotovye-nabory.jpg"),
+          areaServed: "RU",
+          currenciesAccepted: "RUB",
+        }}
+      />
       {/* Герой */}
       <section className="pt-6">
         <div className="relative overflow-hidden rounded-[2rem] bg-primary px-6 py-12 text-primary-foreground sm:px-12 sm:py-16">

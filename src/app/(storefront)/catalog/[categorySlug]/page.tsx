@@ -13,7 +13,22 @@ type SearchParams = Promise<{ sort?: string; inStock?: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { categorySlug } = await params;
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
-  return { title: category?.name ?? "Каталог" };
+  if (!category) return { title: "Каталог" };
+  const description =
+    category.description ??
+    `${category.name} в интернет-магазине RST AERO SYSTEMS: цены, наличие и характеристики. Доставка СДЭК по России, помощь с подбором.`;
+  // Сортировка и фильтр — те же товары, поэтому canonical без параметров.
+  return {
+    title: category.name,
+    description,
+    alternates: { canonical: `/catalog/${category.slug}` },
+    openGraph: {
+      title: category.name,
+      description,
+      url: `/catalog/${category.slug}`,
+      images: category.coverImage ? [{ url: category.coverImage, alt: category.name }] : undefined,
+    },
+  };
 }
 
 export default async function CategoryPage({

@@ -5,7 +5,12 @@ import { ProductGrid } from "@/components/storefront/product-grid";
 import { EmptyState } from "@/components/storefront/empty-state";
 import { getVisibleCategories, getCatalogProducts, type CatalogFilters } from "@/lib/queries";
 
-export const metadata: Metadata = { title: "Каталог" };
+export const metadata: Metadata = {
+  title: "Каталог",
+  description:
+    "Каталог RST AERO SYSTEMS: FPV-дроны, тинивупы, синевупы, готовые наборы, аппаратура, очки, аккумуляторы и запчасти. Доставка СДЭК по России.",
+  alternates: { canonical: "/catalog" },
+};
 
 type SearchParams = Promise<{ sort?: string; inStock?: string }>;
 

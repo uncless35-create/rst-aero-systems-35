@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
+// Пересобирается раз в час: новые товары попадают в карту сайта без выкладки.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [categories, products] = await Promise.all([
     prisma.category.findMany({

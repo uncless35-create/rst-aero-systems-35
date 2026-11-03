@@ -8,8 +8,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Приватные/служебные разделы не индексируем
-        disallow: ["/admin", "/account", "/api", "/checkout", "/cart", "/order"],
+        // Приватные/служебные разделы и страницы без своего содержимого (поиск, избранное, вход) не индексируем
+        disallow: [
+          "/admin", "/account", "/api", "/checkout", "/cart", "/order",
+          "/search", "/favorites", "/login", "/register", "/pereezd.html",
+        ],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,
