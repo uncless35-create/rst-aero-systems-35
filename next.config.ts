@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "radiomasterrc.com", pathname: "/cdn/shop/files/**" },
     ],
   },
+  // Сайт переехал с Vercel на свой сервер. Пока DNS-кэши помнят старый адрес, часть посетителей
+  // попадает на Vercel — там показываем заглушку, чтобы заказы не уходили в старую базу.
+  async rewrites() {
+    if (!process.env.VERCEL) return { beforeFiles: [] };
+    return { beforeFiles: [{ source: "/:path*", destination: "/pereezd.html" }] };
+  },
   async headers() {
     return [
       {
