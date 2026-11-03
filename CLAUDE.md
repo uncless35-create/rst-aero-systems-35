@@ -21,7 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **ЮKassa** REST API v3 (карты + СБП) через `fetch`; при отсутствии ключей — деградирует (заказ без онлайн-оплаты).
 - **Supabase Storage** для фото товаров (bucket `product-images`); без него фото добавляются ссылкой.
 - **Zustand + persist** — корзина и избранное (клиентские, localStorage).
-- **react-hook-form + zod**, **sonner** (тосты). **pnpm**. Деплой — **Vercel**.
+- **react-hook-form + zod**, **sonner** (тосты). **pnpm**. Прод — **свой сервер в Москве** (Timeweb Cloud),
+  см. «Прод-сервер» ниже; Vercel больше не основной хостинг.
 
 ## Окружение и команды
 
@@ -83,16 +84,25 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   `products` (+`new`, `[id]/edit`), `categories`, `delivery-methods`, `orders` (+`[id]`), `pages`.
 - `src/app/api/` — `auth/[...nextauth]`, `webhooks/yookassa`.
 
-## Переход на Supabase/Postgres (прод)
+## Прод-сервер
 
-1. Создать проект Supabase → строки подключения; в [schema.prisma](prisma/schema.prisma) сменить
-   `provider = "postgresql"`, добавить `directUrl = env("DIRECT_URL")`; выставить `DATABASE_URL`
-   (пул, 6543, `?pgbouncer=true`) и `DIRECT_URL` (5432). Создать bucket `product-images` (public).
-2. `prisma migrate dev` (сгенерировать первую Postgres-миграцию) → `pnpm db:seed`.
-3. Заполнить env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `YOOKASSA_SHOP_ID/SECRET_KEY`,
-   `NEXTAUTH_SECRET` (`openssl rand -base64 32`), `NEXTAUTH_URL`, `NEXT_PUBLIC_SITE_URL`.
-4. Vercel: импортировать репо, задать те же env; билд `prisma generate && prisma migrate deploy && next build`.
-5. Зарегистрировать прод-URL вебхука в кабинете ЮKassa: `https://<домен>/api/webhooks/yookassa`.
+Сайт работает на VPS в Москве (`186.246.5.70`, Ubuntu 24.04), а не на Vercel: провайдеры РФ обрывали
+соединения с Vercel после ~16 КБ. Конфиги сервера лежат в [deploy/](deploy/). SSH: `ssh -i ~/.ssh/rst_deploy root@186.246.5.70`.
+
+- **Выкладка — push в `main`.** Раз в минуту `rst-deploy.timer` запускает [deploy.sh](deploy/deploy.sh).
+  Скрипт клонирует коммит в `/srv/rst/releases/<sha>`, затем выполняет `pnpm install`, `prisma migrate deploy`
+  и `pnpm build`, переключает симлинк `/srv/rst/current` и перезапускает `rst-web`. Если сайт после этого
+  не отвечает, скрипт откатывает релиз и пишет владельцу в Telegram. Логи сборок — в `/srv/rst/logs/`,
+  сайта — `journalctl -u rst-web`. Пересобрать вручную: `sudo -u rst /srv/rst/bin/deploy.sh --force`.
+- **Настройки** — `/srv/rst/shared/.env` (симлинк в каждом релизе). `NEXT_PUBLIC_*` инлайнятся при сборке,
+  поэтому после их правки нужна пересборка.
+- **nginx** ([rst-aero.conf](deploy/nginx/rst-aero.conf)) — HTTPS (Let's Encrypt, `certbot.timer`) и редиректы
+  `www`/`http` → `https://rst-aero.ru`.
+- **БД.** PostgreSQL 17 на сервере (база `rst`, доступ только с localhost). Пока `DATABASE_URL` смотрит
+  в Supabase: на время смены DNS обе площадки пишут в одну базу. Копия базы `DIRECT_URL` делается
+  каждую ночь в `/srv/rst/backups/` ([backup-db.sh](deploy/backup-db.sh), хранится 14 дней).
+- Вебхуки ЮKassa и Telegram смотрят на `https://rst-aero.ru/api/webhooks/*`. После смены домена
+  или секрета выполнить `pnpm telegram:webhook` на сервере.
 
 ## Предпосылки вне кода
 

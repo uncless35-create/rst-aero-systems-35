@@ -1,0 +1,2 @@
+# Пользователь сайта может только перезапустить сам сайт (нужно скрипту выкладки).
+rst ALL=(root) NOPASSWD: /usr/bin/systemctl restart rst-web

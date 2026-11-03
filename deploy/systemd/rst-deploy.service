@@ -1,0 +1,12 @@
+[Unit]
+Description=RST AERO — выкладка обновлений из GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rst
+Group=rst
+Environment=HOME=/srv/rst
+ExecStart=/srv/rst/bin/deploy.sh
+TimeoutStartSec=40min

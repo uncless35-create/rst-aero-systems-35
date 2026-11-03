@@ -1,0 +1,8 @@
+[Unit]
+Description=RST AERO — копия базы данных
+
+[Service]
+Type=oneshot
+User=rst
+Group=rst
+ExecStart=/srv/rst/bin/backup-db.sh
