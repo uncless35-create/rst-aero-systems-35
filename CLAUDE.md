@@ -98,9 +98,14 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   поэтому после их правки нужна пересборка.
 - **nginx** ([rst-aero.conf](deploy/nginx/rst-aero.conf)) — HTTPS (Let's Encrypt, `certbot.timer`) и редиректы
   `www`/`http` → `https://rst-aero.ru`.
-- **БД.** PostgreSQL 17 на сервере (база `rst`, доступ только с localhost). Пока `DATABASE_URL` смотрит
-  в Supabase: на время смены DNS обе площадки пишут в одну базу. Копия базы `DIRECT_URL` делается
-  каждую ночь в `/srv/rst/backups/` ([backup-db.sh](deploy/backup-db.sh), хранится 14 дней).
+- **БД — PostgreSQL 17 на сервере** (база и роль `rst`, доступ только с localhost; перенесена из Supabase
+  04.11.2026). Каждую ночь делается копия в `/srv/rst/backups/` ([backup-db.sh](deploy/backup-db.sh),
+  хранится 14 дней). **Локальный `.env` смотрит в Supabase — это уже не прод.** Скрипты против прода
+  (сид, `content:apply`) запускать через туннель: `ssh -i ~/.ssh/rst_deploy -N -L 5433:localhost:5432 root@186.246.5.70`
+  и `DATABASE_URL`/`DIRECT_URL` = `postgresql://rst:<пароль из /root/.rst-db-password>@localhost:5433/rst`.
+- **Vercel** пока собирает каждый push, но домен на него не смотрит. Там все запросы переписываются
+  на [pereezd.html](public/pereezd.html) (`rewrites` при `VERCEL=1` в [next.config.ts](next.config.ts)).
+  Когда отвяжем домен от Vercel, удалить и заглушку, и rewrites.
 - Вебхуки ЮKassa и Telegram смотрят на `https://rst-aero.ru/api/webhooks/*`. После смены домена
   или секрета выполнить `pnpm telegram:webhook` на сервере.
 
