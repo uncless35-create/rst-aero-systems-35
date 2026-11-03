@@ -6,6 +6,7 @@ import { CatalogToolbar } from "@/components/storefront/catalog-toolbar";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { EmptyState } from "@/components/storefront/empty-state";
 import { getVisibleCategories, getCatalogProducts, type CatalogFilters } from "@/lib/queries";
+import { CATEGORY_CONTENT } from "@/data/category-content";
 
 type Params = Promise<{ categorySlug: string }>;
 type SearchParams = Promise<{ sort?: string; inStock?: string }>;
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const category = await prisma.category.findUnique({ where: { slug: categorySlug } });
   if (!category) return { title: "Каталог" };
   const description =
-    category.description ??
+    CATEGORY_CONTENT[category.slug]?.metaDescription ??
     `${category.name} в интернет-магазине RST AERO SYSTEMS: цены, наличие и характеристики. Доставка СДЭК по России, помощь с подбором.`;
   // Сортировка и фильтр — те же товары, поэтому canonical без параметров.
   return {
@@ -56,6 +57,7 @@ export default async function CategoryPage({
     getVisibleCategories(),
     getCatalogProducts(filters),
   ]);
+  const content = CATEGORY_CONTENT[category.slug];
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6">
@@ -76,6 +78,17 @@ export default async function CategoryPage({
           <EmptyState title="В этой категории пока пусто" description="Скоро здесь появятся товары." />
         )}
       </div>
+
+      {content ? (
+        <section className="mx-auto mt-16 max-w-3xl border-t border-border pt-10">
+          <h2 className="text-xl font-semibold tracking-tight">О категории</h2>
+          <div className="mt-4 space-y-4 text-sm leading-7 text-muted-foreground">
+            {content.paragraphs.map((text) => (
+              <p key={text}>{text}</p>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
