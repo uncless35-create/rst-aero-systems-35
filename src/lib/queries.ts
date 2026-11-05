@@ -17,6 +17,12 @@ const productCardInclude = {
 
 type ProductWithCard = Prisma.ProductGetPayload<{ include: typeof productCardInclude }>;
 
+/** Товар можно купить: не помечен «временно нет» и есть остаток у самого товара или у варианта. */
+const inStockWhere = {
+  outOfStock: false,
+  OR: [{ stockQty: { gt: 0 } }, { variants: { some: { stockQty: { gt: 0 } } } }],
+} satisfies Prisma.ProductWhereInput;
+
 export function toCardData(p: ProductWithCard): ProductCardData {
   return {
     id: p.id,
@@ -49,7 +55,8 @@ export const getVisibleCategories = unstable_cache(
 const _getFeatured = unstable_cache(
   async (limit: number) => {
     const products = await prisma.product.findMany({
-      where: { isActive: true, isFeatured: true },
+      // На главной рекомендуем только то, что можно купить прямо сейчас
+      where: { isActive: true, isFeatured: true, ...inStockWhere },
       include: productCardInclude,
       orderBy: { updatedAt: "desc" },
       take: limit,
@@ -90,13 +97,7 @@ const _getCatalog = unstable_cache(
   async (filters: CatalogFilters) => {
     const where: Prisma.ProductWhereInput = { isActive: true };
     if (filters.categorySlug) where.category = { slug: filters.categorySlug };
-    if (filters.inStockOnly) {
-      where.outOfStock = false;
-      where.OR = [
-        { stockQty: { gt: 0 } },
-        { variants: { some: { stockQty: { gt: 0 } } } },
-      ];
-    }
+    if (filters.inStockOnly) Object.assign(where, inStockWhere);
 
     const orderBy: Prisma.ProductOrderByWithRelationInput =
       filters.sort === "price-asc"
@@ -184,7 +185,7 @@ export const getCategoriesWithImage = unstable_cache(
 const _getDiscounted = unstable_cache(
   async (limit: number) => {
     const products = await prisma.product.findMany({
-      where: { isActive: true, oldPriceKopecks: { not: null } },
+      where: { isActive: true, oldPriceKopecks: { not: null }, ...inStockWhere },
       include: productCardInclude,
       orderBy: { updatedAt: "desc" },
       take: limit,
