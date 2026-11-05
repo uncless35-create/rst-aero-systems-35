@@ -7,6 +7,7 @@ set -euo pipefail
 BASE="/srv/rst"
 DEST="$BASE/backups"
 mkdir -p "$DEST"
+cd "$DEST" # при ручном запуске через sudo рабочая папка может быть недоступна (/root)
 
 url=$(grep -E '^DIRECT_URL=' "$BASE/shared/.env" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/')
 file="$DEST/rst-$(date +%Y%m%d-%H%M).dump"
