@@ -44,8 +44,8 @@ type Meta = { name: string; description: string; attributes: [string, string][];
 const META: Record<string, Meta> = {
   "betafpv-meteor-75-pro-o4-elrs": {
     slug: "tinivup-betafpv-meteor-75-pro-o4-pnp",
-    name: "Тинивуп BetaFPV Meteor75 Pro O4 (PNP, без юнита)",
-    description: "Версия тинивупа BetaFPV Meteor75 Pro без видеосистемы — для установки собственного юнита DJI O4. Приёмник ELRS на борту.",
+    name: "Тинивуп BetaFPV Meteor75 Pro II O4 (PNP, без юнита)",
+    description: "Версия тинивупа BetaFPV Meteor75 Pro II без видеосистемы — для установки собственного юнита DJI O4. Приёмник ELRS на борту.",
     attributes: [["Видеосистема", "Не установлена (под DJI O4)"], ["Управление", "ELRS"], ["Комплектация", "PNP"]],
   },
   // --- Новые товары (июль 2026) ---
@@ -341,7 +341,7 @@ const PRICES: Record<string, number> = {
   "radiomaster-tx15-max": 15500,
   "gnb-2s-550mah-xt30": 820,
   "betafpv-1s-6-port-charger": 1445,
-  "betafpv-meteor-75-pro-o4-elrs": 8490, // Meteor75 Pro O4 (PNP, без юнита)
+  "betafpv-meteor-75-pro-o4-elrs": 8990, // Meteor75 Pro II O4 (PNP, без юнита); цена как на Авито
   // --- Air65/Air75 II + RadioMaster Nomad ---
   "air65-ii-brushless-whoop-quadcopter-racing-1080x": 9750,
   "air65-ii-brushless-whoop-quadcopter-freestyle-1080x": 9750,
