@@ -1,4 +1,4 @@
-import { official, type ProductContentRecord } from "./types";
+import { avitoListing, official, type ProductContentRecord } from "./types";
 
 export const kitContent: ProductContentRecord[] = [
   {
@@ -72,6 +72,31 @@ export const kitContent: ProductContentRecord[] = [
       official("BETAFPV — Meteor75 Pro O4", "https://betafpv.com/products/meteor75-pro-o4-brushless-whoop-quadcopter"),
       official("RadioMaster — Pocket", "https://www.radiomasterrc.com/products/pocket-radio-controller-m2"),
       official("DJI — Goggles N3", "https://www.dji.com/goggles-n3/specs"),
+    ],
+    status: "VERIFIED",
+  },
+  {
+    slug: "nabor-betafpv-meteor75-pro-ii-fpv-kit",
+    summary: "Готовый набор BetaFPV для старта: тинивуп Meteor75 Pro II, очки VR03, пульт LiteRadio 2 SE, два аккумулятора и зарядка — всё для полётов уже в коробке.",
+    exactVariant: "BETAFPV Meteor75 Pro II FPV Kit: Meteor75 Pro II (аналог, ELRS 2.4 ГГц) + очки VR03 + пульт LiteRadio 2 SE (Mode 2, газ слева)",
+    description: "Meteor75 Pro II FPV Kit — заводской набор BetaFPV, чтобы начать летать в FPV сразу из коробки. Дрон лёгкий, пропеллеры в защите, поэтому подходит новичкам: летать можно дома и на улице в безветрие.\n\nПульт LiteRadio 2 SE подключается к компьютеру и работает в симуляторах, так что потренироваться можно ещё до первого полёта. Очки VR03 с экраном 4,3″ показывают картинку с камеры дрона и умеют записывать видео на карту microSD.\n\nПеред отправкой проверим комплект: дрон связан с пультом, картинка идёт в очки.",
+    compatibility: "Дрон, очки и пульт уже согласованы между собой: управление по ExpressLRS 2.4 ГГц, видео аналоговое 5,8 ГГц. Для записи видео в очки нужна карта microSD — она в комплект не входит. Дополнительные аккумуляторы 1S с разъёмом BT2.0 продлят полёты — можем добавить в заказ.",
+    packageContents: "Квадрокоптер Meteor75 Pro II, очки VR03, пульт LiteRadio 2 SE (Mode 2, газ слева), 2 аккумулятора Lava II 1S 580 мА·ч, зарядка BT2.0 для 1S с тестером напряжения, кабель и переходник USB-C, переходник 4 pin, 4 запасных пропеллера Gemfan 1811, запасная рама, крепёж для канопы, крестовая отвёртка, сумка для переноски, инструкции.",
+    attributes: [
+      { name: "Уровень", value: "для новичка, всё в одном" },
+      { name: "Дрон", value: "Meteor75 Pro II, база 80 мм, взлётный вес около 45 г" },
+      { name: "Время полёта", value: "до 10,5 минуты" },
+      { name: "Полётный контроллер", value: "Matrix 1S 5IN1 II, ELRS 2.4 ГГц встроенный" },
+      { name: "Моторы и пропеллеры", value: "Freestyle 1102 (2026), Gemfan 1811 трёхлопастные" },
+      { name: "Видео", value: "аналог 5,8 ГГц, 48 каналов, 400 мВт, до 400 м" },
+      { name: "Камера", value: "Air Camera 16:9, обзор 173°, наклон 20°/30°" },
+      { name: "Очки", value: "VR03: экран 4,3″ 800×480, запись на microSD, антенна 3 dBi, 300 г" },
+      { name: "Пульт", value: "LiteRadio 2 SE: ELRS 2.4 ГГц, 100 мВт, аккумулятор 1000 мА·ч до 8 ч" },
+      { name: "Аккумулятор дрона", value: "1S, разъём BT2.0" },
+    ],
+    sources: [
+      official("BETAFPV — Meteor75 Pro II FPV Kit", "https://betafpv.com/products/meteor75-pro-fpv-kit"),
+      avitoListing("/novorossiysk/sport_i_otdyh/fpv_dron_betafpv_meteor75_pro_ii_komplekt_s_ochkami_8515612715"),
     ],
     status: "VERIFIED",
   },

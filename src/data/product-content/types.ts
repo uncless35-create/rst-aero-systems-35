@@ -28,3 +28,8 @@ export function official(label: string, url: string): ContentSource {
 export function manual(label: string, url: string): ContentSource {
   return { label, url, type: "OFFICIAL_MANUAL" };
 }
+
+/** Объявление магазина на Авито, из которого взяты комплектация и описание. */
+export function avitoListing(path: string): ContentSource {
+  return { label: "Объявление RST AERO (FLY STORE) на Авито", url: `https://www.avito.ru${path}`, type: "OTHER" };
+}

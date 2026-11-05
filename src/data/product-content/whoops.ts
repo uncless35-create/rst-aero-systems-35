@@ -1,4 +1,4 @@
-import { official, manual, type ProductContentRecord } from "./types";
+import { avitoListing, official, manual, type ProductContentRecord } from "./types";
 
 const air65Source = official("BETAFPV — Air65 II", "https://betafpv.com/collections/air-whoops/products/air65-ii-brushless-whoop-quadcopter");
 const air75Source = official("BETAFPV — Air75 II", "https://betafpv.com/collections/air-series/products/air75-ii-brushless-whoop-quadcopter");
@@ -191,6 +191,50 @@ export const whoopContent: ProductContentRecord[] = [
     sources: [
       official("Happymodel — Moblite7 HDZero", "https://www.happymodel.cn/index.php/2022/09/15/moblite7-hdzero-1s-75mm-hd-brushless-whoop/"),
       manual("Happymodel — Moblite7 HDZero ELRS Quick Guide", "https://www.happymodel.cn/wp-content/uploads/2022/09/Moblite7-HDZERO-ELRS-version-Quick-User-Guide.pdf"),
+    ],
+    status: "VERIFIED",
+  },
+  {
+    slug: "tinivup-betafpv-air75-ii-champion",
+    summary: "Самая мощная версия тинивупа Air75 II: моторы 0802 28000KV, тяга в 7,1 раза больше веса, всего 20,2 г. Для быстрых полётов в зале, во дворе и на трассе.",
+    exactVariant: "Air75 II Champion, ELRS 2.4 ГГц, аналоговое видео, 0802 28000KV",
+    description: "BetaFPV Air75 II Champion — самая мощная версия тинивупа Air75 II. Моторы 0802 28000KV на двойных шарикоподшипниках и трёхлопастные пропеллеры Gemfan 1614: по данным BetaFPV, тяга в 7,1 раза больше веса. Для тех, кто летает быстро: в зале, во дворе, на гоночной трассе. Самый лёгкий в линейке — 20,2 г.\n\nПеред отправкой проверим дрон и забиндим с вашим пультом — напишите модель пульта в комментарии к заказу.",
+    compatibility: "Нужны ELRS-аппаратура 2.4 ГГц, аналоговые очки 5,8 ГГц и аккумулятор 1S с разъёмом BT2.0. С аккумулятором 480 мА·ч — до 6 мин 50 с полёта. Аккумуляторы, зарядку для 1S и пульт ELRS можно добавить в заказ.",
+    packageContents: "Дрон Air75 II Champion, новый, собран; камера, видеопередатчик и приёмник ELRS 2,4 ГГц установлены. Аккумулятор, зарядное устройство, пульт и очки не входят.",
+    attributes: [
+      { name: "Рама", value: "75 мм, пропеллеры в дактах" },
+      { name: "Масса", value: "20,2 г без аккумулятора" },
+      { name: "Плата", value: "Matrix 1S 5-в-1 II, ESC 12 А" },
+      { name: "Моторы", value: "0802 28000KV, двойные шарикоподшипники" },
+      { name: "Пропеллеры", value: "Gemfan 1614, 3 лопасти" },
+      { name: "Камера", value: "C03, аналоговая" },
+      { name: "Видео", value: "аналог 5.8 ГГц, 25–400 мВт" },
+      { name: "Управление", value: "ExpressLRS 2.4 ГГц, встроенный приёмник" },
+      { name: "Питание", value: "1S, BT2.0, до 6 мин 50 с на 480 мА·ч" },
+    ],
+    sources: [air75Source, avitoListing("/novorossiysk/sport_i_otdyh/kvadrokopter_betafpv_air75_ii_champion_fpv_dron_8320603675")],
+    status: "VERIFIED",
+  },
+  {
+    slug: "tinivup-betafpv-meteor75-pro-ii-developer-kit",
+    summary: "Все детали Meteor75 Pro II, чтобы собрать вуп своими руками: паять не нужно, всё на разъёмах. В наборе запасная рама и второй комплект пропеллеров. Можем собрать за вас бесплатно.",
+    exactVariant: "BETAFPV Meteor75 Pro II Developer Kit — набор для сборки (аналог, ELRS 2.4 ГГц)",
+    description: "BetaFPV Meteor75 Pro II Developer Kit — полный набор деталей, чтобы собрать вуп Meteor75 Pro II своими руками. Внутри всё, из чего состоит готовый дрон, плюс запасная рама и второй комплект пропеллеров. Плата уже прошита и настроена производителем, схема сборки есть в инструкции, паять ничего не нужно. Подойдёт тем, кто хочет разобраться в устройстве FPV-дрона, и для занятий в кружке.\n\nНе хотите собирать сами — соберём бесплатно: перед отправкой соберём, настроим и забиндим с вашим пультом. Напишите об этом в комментарии к заказу или в чат. Если при сборке появятся вопросы — подскажем.",
+    compatibility: "После сборки нужны ELRS-аппаратура 2.4 ГГц, аналоговые очки 5,8 ГГц и аккумулятор 1S с разъёмом BT2.0. С Lava II 580 мА·ч — до 10,5 минуты полёта. Аккумуляторы, зарядку для 1S и пульт ELRS можно добавить в заказ.",
+    packageContents: "2 рамы Meteor75 Pro II, полётный контроллер Matrix 1S 5-в-1 II с приёмником ELRS 2,4 ГГц и видеопередатчиком, 4 мотора 1102 Freestyle (2026), камера Air Camera 16:9 и антенна 5,8 ГГц, канопа, 3 крепления камеры, 8 пропеллеров Gemfan 1811, демпферы, винты, переходник USB-C, крестовая отвёртка, инструкция со схемой сборки. Аккумулятор, зарядное устройство, пульт и очки не входят.",
+    attributes: [
+      { name: "Формат", value: "набор для сборки, без пайки" },
+      { name: "Рама", value: "80 мм между осями моторов, пропеллеры в дактах" },
+      { name: "Моторы", value: "1102 Freestyle (2026), тяга в 6,3 раза больше веса" },
+      { name: "Плата", value: "Matrix 1S 5-в-1 II, ESC 12 А" },
+      { name: "Видео", value: "аналог 5.8 ГГц, 25–400 мВт" },
+      { name: "Камера", value: "Air Camera 16:9, обзор 173°, стеклянная линза" },
+      { name: "Масса", value: "около 28 г без аккумулятора" },
+      { name: "Питание", value: "1S, BT2.0, до 10,5 мин на Lava II 580 мА·ч" },
+    ],
+    sources: [
+      official("BETAFPV — Meteor75 Pro II", "https://betafpv.com/products/meteor75-pro-ii-brushless-whoop-quadcopter"),
+      avitoListing("/novorossiysk/sport_i_otdyh/fpv_dron_betafpv_meteor75_pro_ii_nabor_sborka_8483141069"),
     ],
     status: "VERIFIED",
   },

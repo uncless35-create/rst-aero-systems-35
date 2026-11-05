@@ -3,9 +3,9 @@ import { productContent, validateProductContent } from "@/data/product-content";
 
 describe("product content registry", () => {
   it("contains a valid unique record for every current catalog product", () => {
-    expect(productContent).toHaveLength(43);
+    expect(productContent).toHaveLength(52);
     expect(validateProductContent()).toEqual([]);
-    expect(new Set(productContent.map((record) => record.slug)).size).toBe(43);
+    expect(new Set(productContent.map((record) => record.slug)).size).toBe(52);
   });
 
   it("требует заметку у каждого товара со статусом NEEDS_REVIEW", () => {
