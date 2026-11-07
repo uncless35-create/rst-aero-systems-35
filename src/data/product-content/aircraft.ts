@@ -1,4 +1,4 @@
-import { official, type ProductContentRecord } from "./types";
+import { avitoListing, official, type ProductContentRecord } from "./types";
 
 export const aircraftContent: ProductContentRecord[] = [
   {
@@ -64,22 +64,26 @@ export const aircraftContent: ProductContentRecord[] = [
   },
   {
     slug: "dron-iflight-nazgul-xl5-eco-analog-pnp",
-    summary: "Пятидюймовый аналоговый 6S-дрон в комплектации PNP: силовая установка собрана, но приёмник управления нужно выбрать и установить отдельно.",
-    exactVariant: "Nazgul XL5 ECO V1.1, Analog, PNP без приёмника, 6S",
-    description: "iFlight Nazgul XL5 ECO V1.1 — готовая пятидюймовая платформа для фристайла. В ней используются моторы XING-E Pro 2207 1800KV, ESC BLITZ E55 и аналоговый видеопередатчик BLITZ мощностью до 1,6 Вт. Комплектация PNP не содержит радиоприёмник: это позволяет поставить ELRS, TBS Crossfire или другую систему управления по выбору пилота.",
-    compatibility: "Нужно установить совместимый радиоприёмник, подготовить аппаратуру управления, аналоговые очки 5.8 ГГц и аккумулятор 6S с XT60. После монтажа приёмника необходимо настроить протокол порта, привязку и failsafe в полётном контроллере.",
-    packageContents: "Собранный Nazgul XL5 ECO V1.1 в версии PNP и заводской набор аксессуаров. Радиоприёмник, аппаратура, очки, аккумулятор и зарядное устройство не входят.",
+    name: "FPV-дрон iFlight Nazgul XL5 ECO (аналог, ELRS 2.4)",
+    summary: "Один из самых популярных пятидюймовых дронов для фристайла: прочная рама, видеопередатчик до 1,6 Вт, 6S. Приёмник ELRS 2.4 ГГц уже установлен — остаётся забиндить пульт.",
+    exactVariant: "Nazgul XL5 ECO, аналоговое видео, приёмник ELRS 2.4 ГГц установлен, 6S",
+    description: "iFlight Nazgul XL5 ECO — один из самых популярных пятидюймовых дронов для фристайла: прочная рама, видеопередатчик до 1,6 Вт, запчасти легко найти. Летает на 6S, аналоговое видео работает с любыми аналоговыми очками. Приёмник ELRS 2,4 ГГц уже установлен.\n\nПеред отправкой проверим дрон и забиндим с вашим пультом — напишите модель пульта в комментарии к заказу.",
+    compatibility: "Нужны пульт ELRS 2,4 ГГц, аналоговые очки 5,8 ГГц и аккумулятор 6S с разъёмом XT60. Полёт — до 7,5 минуты на 6S 1400 мА·ч без нагрузки. Аккумуляторы Ovonic 6S 1300 и 1550 мА·ч и пульт ELRS можно добавить в заказ.",
+    packageContents: "Дрон Nazgul XL5 ECO, новый, собран; приёмник ELRS 2,4 ГГц установлен. Аккумулятор, зарядное устройство, пульт и очки не входят.",
     attributes: [
-      { name: "Класс", value: "5 дюймов, 245 мм" },
-      { name: "Комплектация", value: "PNP, без радиоприёмника" },
-      { name: "ESC", value: "BLITZ E55 4-в-1" },
+      { name: "Класс", value: "5 дюймов, 245 мм между осями моторов" },
+      { name: "Приёмник", value: "ELRS 2.4 ГГц, установлен" },
+      { name: "ESC", value: "BLITZ E55S, 55 А" },
       { name: "Моторы", value: "XING-E Pro 2207 1800KV" },
-      { name: "Пропеллеры", value: "Nazgul F5" },
+      { name: "Пропеллеры", value: "Nazgul F5 5,1\"" },
       { name: "Видеосистема", value: "аналоговая, VTX BLITZ до 1,6 Вт" },
       { name: "Питание", value: "6S, XT60" },
       { name: "Масса", value: "около 427 г без аккумулятора" },
     ],
-    sources: [official("iFlight — Nazgul XL5 ECO V1.1", "https://shop.iflight.com/iflight-quads-cat25/freestyle-quads-cat29/Nazgul-XL5-ECO-6S-Pro2193?limit=100")],
+    sources: [
+      official("iFlight — Nazgul XL5 ECO V1.1", "https://shop.iflight.com/iflight-quads-cat25/freestyle-quads-cat29/Nazgul-XL5-ECO-6S-Pro2193?limit=100"),
+      avitoListing("/novorossiysk/sport_i_otdyh/fpv_dron_iflight_nazgul_xl5_eco_analog_5_dyuymov_4513078667"),
+    ],
     status: "VERIFIED",
   },
   {

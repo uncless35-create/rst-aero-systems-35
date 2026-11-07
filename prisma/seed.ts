@@ -140,9 +140,9 @@ const META: Record<string, Meta> = {
     attributes: [["Питание", "1S"], ["Управление", "ELRS"]],
   },
   "tinivup-happymodel-mobula-7-1s-hdzero": {
-    name: "Тинивуп Happymodel Moblite7 1S HDZero ELRS",
-    description: "Цифровой 75-мм тинивуп Moblite7 HDZero на 1S со SPI ELRS 2.4 ГГц.",
-    attributes: [["Питание", "1S, GNB27"], ["Видеосистема", "HDZero"], ["Управление", "ELRS 2.4 ГГц"]],
+    name: "Тинивуп Happymodel Mobula7 Freestyle HD (HDZero, ELRS)",
+    description: "Цифровой 75-мм тинивуп Mobula 7 Freestyle HD на 1S с видео HDZero и SPI ELRS 2.4 ГГц.",
+    attributes: [["Питание", "1S"], ["Видеосистема", "HDZero"], ["Управление", "ELRS 2.4 ГГц"]],
   },
   "tinivup-betafpv-meteor-75-pro-o4-elrs": {
     name: "Тинивуп BetaFPV Meteor75 Pro O4 (ELRS)",
