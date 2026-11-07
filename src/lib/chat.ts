@@ -371,3 +371,84 @@ export async function getChatHistory(publicToken: string) {
     })),
   };
 }
+
+/**
+ * Диалог вошедшего покупателя: последний по времени. Виджет хранит токен только в браузере,
+ * поэтому сообщение, которое менеджер начал из заказа, покупатель находит через аккаунт.
+ */
+export async function getUserConversation(userId: string) {
+  const conversation = await prisma.chatConversation.findFirst({
+    where: { userId },
+    orderBy: { lastMessageAt: "desc" },
+    select: {
+      publicToken: true,
+      _count: { select: { messages: { where: { sender: "MANAGER", readAt: null } } } },
+    },
+  });
+  if (!conversation) return null;
+  return { conversationToken: conversation.publicToken, unread: conversation._count.messages };
+}
+
+/**
+ * Менеджер пишет первым покупателю заказа: в его последний диалог или в новый,
+ * привязанный к аккаунту. Покупатель из Telegram получит сообщение в бот.
+ */
+export async function sendManagerMessageForOrder(
+  order: {
+    orderNumber: number;
+    userId: string | null;
+    customerName: string;
+    customerPhone: string;
+    privacyAcceptedAt: Date | null;
+    privacyPolicyVersion: string | null;
+  },
+  body: string,
+): Promise<{ ok: true; conversationId: string } | { ok: false; error: string }> {
+  if (!order.userId) {
+    return {
+      ok: false,
+      error: "Заказ оформлен без аккаунта — в чат на сайте не доставить. Напишите в Telegram или WhatsApp.",
+    };
+  }
+
+  const existing = await prisma.chatConversation.findFirst({
+    where: { userId: order.userId },
+    orderBy: { lastMessageAt: "desc" },
+    select: { id: true, telegramUserChatId: true },
+  });
+  const conversation =
+    existing ??
+    (await prisma.chatConversation.create({
+      data: {
+        publicToken: randomUUID(),
+        userId: order.userId,
+        customerName: order.customerName,
+        customerContact: order.customerPhone,
+        pagePath: `/account/orders/${order.orderNumber}`,
+        privacyAcceptedAt: order.privacyAcceptedAt,
+        privacyPolicyVersion: order.privacyPolicyVersion,
+      },
+      select: { id: true, telegramUserChatId: true },
+    }));
+
+  const deliveryStatus = await deliverManagerReplyToCustomer(conversation, body);
+  if (deliveryStatus === "FAILED") {
+    return { ok: false, error: "Telegram недоступен, сообщение не отправлено. Попробуйте ещё раз." };
+  }
+
+  await prisma.$transaction([
+    prisma.chatMessage.create({
+      data: {
+        conversationId: conversation.id,
+        sender: "MANAGER",
+        body,
+        deliveryStatus: deliveryStatus === "DELIVERED" ? "DELIVERED" : "SKIPPED",
+      },
+    }),
+    prisma.chatConversation.update({
+      where: { id: conversation.id },
+      data: { status: "OPEN", lastMessageAt: new Date() },
+    }),
+  ]);
+  return { ok: true, conversationId: conversation.id };
+}

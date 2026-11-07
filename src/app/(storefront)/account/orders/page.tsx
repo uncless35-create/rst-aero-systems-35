@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/storefront/status-badge";
 import { EmptyState } from "@/components/storefront/empty-state";
+import { ManagerMessageNotice } from "@/components/storefront/manager-message-notice";
 import { Button } from "@/components/ui/button";
 import { formatRub } from "@/lib/money";
 
@@ -24,6 +25,7 @@ export default async function AccountOrdersPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pt-8">
       <h1 className="text-2xl font-bold tracking-tight">Мои заказы</h1>
+      <ManagerMessageNotice userId={session.user.id} />
 
       <div className="mt-6">
         {orders.length === 0 ? (

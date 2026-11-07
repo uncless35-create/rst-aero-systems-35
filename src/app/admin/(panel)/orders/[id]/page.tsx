@@ -4,6 +4,7 @@ import { ChevronLeft, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { CdekShipmentPanel } from "@/components/admin/cdek-shipment-panel";
+import { OrderChatForm } from "@/components/admin/order-chat-form";
 import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
@@ -138,6 +139,8 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
           </div>
         </div>
       </div>
+
+      {order.userId && <OrderChatForm orderId={order.id} />}
 
       {order.deliveryMethod.provider === "CDEK" && (
         <CdekShipmentPanel

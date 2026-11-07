@@ -33,13 +33,32 @@ export function ManagerChat() {
   const [sending, setSending] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
+  // Непрочитанные сообщения менеджера — значок на кнопке, пока чат закрыт.
+  const [unread, setUnread] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   // С токеном диалога бот подхватит переписку, начатую на сайте.
   const telegramUrl = telegramBotUrl(token);
 
+  // Вошедший покупатель: берём диалог его аккаунта — туда пишет менеджер из карточки заказа.
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/chat/mine", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { conversationToken?: string; unread?: number } | null) => {
+        if (cancelled || !data?.conversationToken) return;
+        window.localStorage.setItem(TOKEN_KEY, data.conversationToken);
+        setToken(data.conversationToken);
+        setUnread(data.unread ?? 0);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setToken(window.localStorage.getItem(TOKEN_KEY));
+      setToken((current) => current ?? window.localStorage.getItem(TOKEN_KEY));
       const savedProfile = window.localStorage.getItem(PROFILE_KEY);
       if (!savedProfile) return;
       try {
@@ -77,6 +96,7 @@ export function ManagerChat() {
     if (!response.ok) return;
     const data = (await response.json()) as { messages: ChatMessage[] };
     setMessages(data.messages);
+    setUnread(0); // история загружена в открытом чате — сервер отметил сообщения прочитанными
   }, []);
 
   useEffect(() => {
@@ -262,11 +282,16 @@ export function ManagerChat() {
             type="button"
             size="lg"
             onClick={() => setOpen(true)}
-            className="gap-2 shadow-xl"
-            aria-label="Открыть чат с менеджером"
+            className="relative gap-2 shadow-xl"
+            aria-label={unread > 0 ? "Новое сообщение от менеджера — открыть чат" : "Открыть чат с менеджером"}
           >
             <MessageCircle className="size-5" />
-            <span className="hidden sm:inline">Задать вопрос</span>
+            <span className="hidden sm:inline">{unread > 0 ? "Новое сообщение" : "Задать вопрос"}</span>
+            {unread > 0 ? (
+              <span className="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                {unread}
+              </span>
+            ) : null}
           </Button>
         </div>
       )}

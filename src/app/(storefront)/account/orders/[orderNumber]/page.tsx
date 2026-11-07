@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/storefront/status-badge";
 import { CancelOrderButton } from "@/components/storefront/cancel-order-button";
+import { ManagerMessageNotice } from "@/components/storefront/manager-message-notice";
 import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
@@ -55,6 +56,8 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
       <p className="mt-1 text-sm text-muted-foreground">
         {new Date(order.createdAt).toLocaleString("ru-RU")}
       </p>
+
+      <ManagerMessageNotice userId={session.user.id} />
 
       <div className="mt-6 rounded-3xl border border-border p-5">
         <div className="space-y-3">

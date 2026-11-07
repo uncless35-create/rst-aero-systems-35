@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/admin";
-import { deliverManagerReplyToCustomer } from "@/lib/chat";
+import { deliverManagerReplyToCustomer, sendManagerMessageForOrder } from "@/lib/chat";
 import { prisma } from "@/lib/prisma";
 
 export async function replyToChat(conversationId: string, rawBody: string) {
@@ -48,4 +48,32 @@ export async function setChatStatus(conversationId: string, status: "OPEN" | "CL
   revalidatePath("/admin/chats");
   revalidatePath(`/admin/chats/${conversationId}`);
   return { ok: true as const };
+}
+
+/** Написать покупателю заказа в чат на сайте (из карточки заказа в админке). */
+export async function messageOrderCustomer(orderId: string, rawBody: string) {
+  await assertAdmin();
+  const body = rawBody.trim();
+  if (!body) return { ok: false as const, error: "Напишите сообщение" };
+  if (body.length > 4000) return { ok: false as const, error: "Не более 4000 символов" };
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      userId: true,
+      customerName: true,
+      customerPhone: true,
+      privacyAcceptedAt: true,
+      privacyPolicyVersion: true,
+    },
+  });
+  if (!order) return { ok: false as const, error: "Заказ не найден" };
+
+  const result = await sendManagerMessageForOrder(order, body);
+  if (!result.ok) return result;
+  revalidatePath("/admin/chats");
+  revalidatePath(`/admin/chats/${result.conversationId}`);
+  revalidatePath(`/admin/orders/${orderId}`);
+  return result;
 }
