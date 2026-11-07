@@ -68,6 +68,13 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   Ссылка из виджета несёт `?start=<publicToken>`, поэтому переписка, начатая на сайте, продолжается
   в Telegram тем же диалогом. Вебхук [api/webhooks/telegram](src/app/api/webhooks/telegram/route.ts)
   различает чат владельца (`TELEGRAM_CHAT_ID`) и покупателей, идемпотентен по `update_id`.
+- **Оплата сейчас при получении.** Онлайн-оплата не подключена, поэтому накладная СДЭК
+  ([cdek-shipment.ts](src/actions/admin/cdek-shipment.ts)) идёт **наложенным платежом**: товары и доставка
+  к оплате при получении, если `paymentStatus !== SUCCEEDED`. Тексты про оплату — в [payment-copy.ts](src/lib/payment-copy.ts).
+- **Отмена заказа.** Покупатель отменяет сам из личного кабинета, пока заказ не в СДЭК и не оплачен онлайн
+  ([order-cancel.ts](src/lib/order-cancel.ts)). Любая отмена (и покупателем, и в админке) возвращает товары
+  на остаток через `restoreOrderInventory`. Остатки сверяются с Авито, поэтому старые и тестовые заказы
+  отменять SQL-ом с `inventoryRestoredAt = now()`, без возврата.
 - **Гостевые заказы** не видны в «Моих заказах», пока их не привяжут: страница заказа `/order/<accessToken>/success`
   ведёт на `/register|login?order=<accessToken>`, после входа [claimGuestOrder](src/actions/orders.ts) ставит `userId`.
   Право на заказ — только секретный `accessToken`; по email/телефону не привязываем (email не подтверждается).
