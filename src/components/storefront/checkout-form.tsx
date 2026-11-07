@@ -18,6 +18,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { useHydrated } from "@/lib/use-hydrated";
 import { formatRub } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { payOnDeliveryText } from "@/lib/payment-copy";
 import { CdekWidget, type CdekSelection } from "@/components/storefront/cdek-widget";
 
 const formSchema = checkoutSchema.omit({ items: true });
@@ -39,9 +40,12 @@ export type DeliveryOption = {
 export function CheckoutForm({
   deliveryMethods,
   cdekReady = false,
+  onlinePayment = false,
 }: {
   deliveryMethods: DeliveryOption[];
   cdekReady?: boolean;
+  /** Подключена онлайн-оплата (ЮKassa/Т-Банк); иначе заказ оплачивается при получении */
+  onlinePayment?: boolean;
 }) {
   const router = useRouter();
   const hydrated = useHydrated();
@@ -220,6 +224,11 @@ export function CheckoutForm({
               </label>
             ))}
           </div>
+          {!deliveryMethods.some((d) => /почт/i.test(d.name)) && (
+            <p className="text-xs text-muted-foreground">
+              Почта России временно недоступна — отправляем СДЭК по всей России.
+            </p>
+          )}
 
           {/* СДЭК: карта пунктов выдачи с авторасчётом стоимости */}
           {isCdek && (
@@ -258,6 +267,16 @@ export function CheckoutForm({
             </div>
           )}
         </section>
+
+        {/* Оплата */}
+        {!onlinePayment && (
+          <section className="space-y-2">
+            <h2 className="text-lg font-semibold">Оплата</h2>
+            <p className="rounded-2xl bg-surface p-4 text-sm text-muted-foreground">
+              {payOnDeliveryText(selectedDelivery?.provider)}
+            </p>
+          </section>
+        )}
 
         {/* Комментарий */}
         <section className="space-y-2">

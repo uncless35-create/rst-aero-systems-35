@@ -5,9 +5,12 @@ import { ChevronLeft } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/storefront/status-badge";
+import { CancelOrderButton } from "@/components/storefront/cancel-order-button";
 import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
+import { customerCancelBlockReason } from "@/lib/order-cancel";
+import { payOnDeliveryText } from "@/lib/payment-copy";
 
 type Params = Promise<{ orderNumber: string }>;
 
@@ -26,6 +29,12 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
     include: { items: true, deliveryMethod: true },
   });
   if (!order || order.userId !== session.user.id) notFound();
+
+  const cancelled = order.status === "CANCELLED";
+  const canCancel = customerCancelBlockReason(order) === null;
+  // Онлайн-оплата не подключена — заказы без платежа оплачиваются при получении.
+  const payOnDelivery =
+    !cancelled && order.paymentStatus !== "SUCCEEDED" && !order.yookassaPaymentId && !order.tbankPaymentId;
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-8">
@@ -78,6 +87,13 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
         </div>
       </div>
 
+      {payOnDelivery && (
+        <div className="mt-4 rounded-3xl border border-border p-5 text-sm">
+          <p className="font-medium">Оплата</p>
+          <p className="mt-2 text-muted-foreground">{payOnDeliveryText(order.deliveryMethod.provider)}</p>
+        </div>
+      )}
+
       {order.cdekTrackNumber && (
         <div className="mt-4 rounded-3xl border border-border p-5 text-sm">
           <p className="font-medium">Отслеживание СДЭК</p>
@@ -106,6 +122,13 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
           {order.comment && <p className="italic">«{order.comment}»</p>}
         </div>
       </div>
+
+      {canCancel && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border p-5 text-sm">
+          <p className="text-muted-foreground">Передумали? Заказ можно отменить, пока мы его не отправили.</p>
+          <CancelOrderButton orderNumber={order.orderNumber} />
+        </div>
+      )}
     </div>
   );
 }

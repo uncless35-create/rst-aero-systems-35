@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Mail, MessageCircle, Phone, Send } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
 import { CdekShipmentPanel } from "@/components/admin/cdek-shipment-panel";
 import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
+import { normalizeRuPhone } from "@/lib/phone";
 
 export const metadata = { title: "Заказ" };
 
@@ -19,6 +20,20 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
     include: { items: true, deliveryMethod: true, user: true },
   });
   if (!order) notFound();
+
+  // Сайт не умеет первым написать покупателю (нет почтовой рассылки, чат привязан к браузеру),
+  // поэтому даём прямые ссылки: Telegram и WhatsApp по номеру, звонок, почта и его чаты на сайте.
+  const phone = normalizeRuPhone(order.customerPhone);
+  const chats = order.userId
+    ? await prisma.chatConversation.findMany({
+        where: { userId: order.userId },
+        orderBy: { lastMessageAt: "desc" },
+        take: 3,
+        select: { id: true, lastMessageAt: true },
+      })
+    : [];
+  const contactLink =
+    "inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -49,6 +64,36 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
             {order.customerEmail && <p>{order.customerEmail}</p>}
             {order.user && <p className="text-xs">Аккаунт: {order.user.email}</p>}
           </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {phone && (
+              <>
+                <a href={`https://t.me/+${phone}`} target="_blank" rel="noopener noreferrer" className={contactLink}>
+                  <Send className="size-3.5" /> Telegram
+                </a>
+                <a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer" className={contactLink}>
+                  <MessageCircle className="size-3.5" /> WhatsApp
+                </a>
+                <a href={`tel:+${phone}`} className={contactLink}>
+                  <Phone className="size-3.5" /> Позвонить
+                </a>
+              </>
+            )}
+            {order.customerEmail && (
+              <a href={`mailto:${order.customerEmail}?subject=${encodeURIComponent(`Заказ №${order.orderNumber} — RST AERO`)}`} className={contactLink}>
+                <Mail className="size-3.5" /> Почта
+              </a>
+            )}
+            {chats.map((chat, i) => (
+              <Link key={chat.id} href={`/admin/chats/${chat.id}`} className={contactLink}>
+                <MessageCircle className="size-3.5" /> {i === 0 ? "Чат на сайте" : `Чат от ${chat.lastMessageAt.toLocaleDateString("ru-RU")}`}
+              </Link>
+            ))}
+          </div>
+          {phone && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Telegram откроется, только если покупатель разрешил находить себя по номеру.
+            </p>
+          )}
         </div>
 
         {/* Доставка */}
@@ -99,6 +144,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
           orderId={order.id}
           uuid={order.cdekOrderUuid}
           trackNumber={order.cdekTrackNumber}
+          cashOnDeliveryKopecks={order.paymentStatus === "SUCCEEDED" ? 0 : order.totalKopecks}
         />
       )}
     </div>

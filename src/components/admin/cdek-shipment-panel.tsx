@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatRub } from "@/lib/money";
 import {
   createShipmentForOrder,
   refreshShipmentNumber,
@@ -13,10 +14,13 @@ export function CdekShipmentPanel({
   orderId,
   uuid: initialUuid,
   trackNumber: initialTrack,
+  cashOnDeliveryKopecks,
 }: {
   orderId: string;
   uuid: string | null;
   trackNumber: string | null;
+  /** Сколько СДЭК возьмёт с покупателя при получении; 0 — заказ оплачен заранее */
+  cashOnDeliveryKopecks: number;
 }) {
   const [uuid, setUuid] = useState(initialUuid);
   const [track, setTrack] = useState(initialTrack);
@@ -50,6 +54,17 @@ export function CdekShipmentPanel({
   return (
     <div className="mt-4 rounded-3xl bg-background p-5 text-sm">
       <p className="mb-2 font-semibold">Отправление СДЭК</p>
+      <p className="mb-3 text-muted-foreground">
+        {cashOnDeliveryKopecks > 0 ? (
+          <>
+            Наложенный платёж:{" "}
+            <span className="font-semibold text-foreground">{formatRub(cashOnDeliveryKopecks)}</span> — СДЭК
+            возьмёт с покупателя при получении (товары и доставка).
+          </>
+        ) : (
+          "Заказ оплачен заранее — при получении покупатель ничего не платит."
+        )}
+      </p>
       {uuid ? (
         <div className="space-y-2 text-muted-foreground">
           {track ? (

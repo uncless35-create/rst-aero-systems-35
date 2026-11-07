@@ -174,12 +174,16 @@ export type CdekShipmentItem = {
   name: string;
   wareKey: string; // артикул/идентификатор товара
   costRub: number; // объявленная стоимость, руб
+  /** Наложенный платёж за единицу товара, руб; 0 — товар оплачен заранее */
+  paymentRub: number;
   weightGrams: number;
   amount: number;
 };
 
 /**
  * Создать заказ-отправление (накладную) в СДЭК: POST /v2/orders.
+ * Наложенный платёж: СДЭК берёт с получателя paymentRub за каждый товар и
+ * deliveryRecipientCostRub за доставку, затем перечисляет деньги магазину.
  * Возвращает UUID заказа. Номер накладной (cdek_number) появляется асинхронно —
  * получить его можно через getCdekOrderInfo(uuid).
  */
@@ -191,6 +195,8 @@ export async function createCdekShipment(params: {
   recipientName: string;
   recipientPhone: string;
   items: CdekShipmentItem[];
+  /** Сколько получатель платит за доставку при получении, руб; 0 — не берём */
+  deliveryRecipientCostRub: number;
 }): Promise<{ uuid: string }> {
   const totalWeight = params.items.reduce(
     (s, i) => s + Math.max(1, Math.round(i.weightGrams)) * i.amount,
@@ -213,7 +219,7 @@ export async function createCdekShipment(params: {
         items: params.items.map((i, idx) => ({
           name: i.name.slice(0, 255),
           ware_key: (i.wareKey || `item-${idx + 1}`).slice(0, 50),
-          payment: { value: 0 }, // предоплата — наложенного платежа нет
+          payment: { value: Math.max(0, i.paymentRub) },
           cost: Math.max(0, Math.round(i.costRub)),
           weight: Math.max(1, Math.round(i.weightGrams)),
           amount: Math.max(1, i.amount),
@@ -221,6 +227,10 @@ export async function createCdekShipment(params: {
       },
     ],
   };
+
+  if (params.deliveryRecipientCostRub > 0) {
+    body.delivery_recipient_cost = { value: params.deliveryRecipientCostRub };
+  }
 
   // ПВЗ или курьер
   if (params.pvzCode) {

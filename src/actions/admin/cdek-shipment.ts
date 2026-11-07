@@ -43,7 +43,7 @@ export async function createShipmentForOrder(orderId: string): Promise<ShipmentR
   ) {
     return {
       ok: false,
-      error: "Перед созданием отправления подтвердите оплату и переведите заказ в статус «Оплачен» или «В обработке».",
+      error: "Перед созданием отправления подтвердите заказ: переведите его в статус «В обработке» (или «Оплачен»).",
     };
   }
   if (order.cdekOrderUuid) {
@@ -53,10 +53,14 @@ export async function createShipmentForOrder(orderId: string): Promise<ShipmentR
     return { ok: false, error: "В заказе нет данных тарифа/города СДЭК" };
   }
 
+  // Не оплачен онлайн — отправляем наложенным платежом: СДЭК берёт с покупателя
+  // стоимость товаров и доставки при получении.
+  const cashOnDelivery = order.paymentStatus !== "SUCCEEDED";
   const items = order.items.map((it) => ({
     name: it.variantName ? `${it.productName} (${it.variantName})` : it.productName,
     wareKey: it.product?.sku || it.productId || it.id,
     costRub: Math.round(it.priceKopecks / 100),
+    paymentRub: cashOnDelivery ? it.priceKopecks / 100 : 0,
     weightGrams: it.product?.weightGrams ?? CDEK_DEFAULT_WEIGHT_GRAMS,
     amount: it.quantity,
   }));
@@ -70,6 +74,7 @@ export async function createShipmentForOrder(orderId: string): Promise<ShipmentR
       recipientName: order.customerName,
       recipientPhone: order.customerPhone,
       items,
+      deliveryRecipientCostRub: cashOnDelivery ? order.deliveryPriceKopecks / 100 : 0,
     });
 
     // Пробуем сразу получить номер накладной (может быть ещё не готов)

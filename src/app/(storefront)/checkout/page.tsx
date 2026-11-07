@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { CheckoutForm } from "@/components/storefront/checkout-form";
 import { getActiveDeliveryMethods } from "@/lib/queries";
 import { isCdekProduction } from "@/lib/cdek";
+import { isYookassaConfigured } from "@/lib/yookassa";
+import { isTbankConfigured } from "@/lib/tbank";
 
 export const metadata: Metadata = { title: "Оформление заказа" };
 
@@ -14,6 +16,7 @@ export default async function CheckoutPage() {
       <div className="mt-6">
         <CheckoutForm
           cdekReady={isCdekProduction()}
+          onlinePayment={isYookassaConfigured() || isTbankConfigured()}
           deliveryMethods={deliveryMethods.map((d) => ({
             id: d.id,
             name: d.name,

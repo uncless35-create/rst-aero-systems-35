@@ -12,6 +12,7 @@ import { getTbankState, mapTbankStatus } from "@/lib/tbank";
 import { getPayment, mapPaymentStatus } from "@/lib/yookassa";
 import { applyOrderPaymentState } from "@/lib/order-payment";
 import { formatRub } from "@/lib/money";
+import { payOnDeliveryText } from "@/lib/payment-copy";
 import { auth } from "@/lib/auth";
 import {
   ORDER_STATUS_LABELS,
@@ -138,8 +139,15 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
         <p className="mt-2 text-muted-foreground">
           {paid
             ? "Оплата получена. Мы свяжемся с вами для уточнения деталей."
-            : "Мы приняли ваш заказ и свяжемся с вами для подтверждения и оплаты."}
+            : order.yookassaPaymentId || order.tbankPaymentId
+              ? "Мы приняли ваш заказ и свяжемся с вами для подтверждения и оплаты."
+              : "Мы приняли ваш заказ и свяжемся с вами для подтверждения."}
         </p>
+        {!paid && !order.yookassaPaymentId && !order.tbankPaymentId && (
+          <p className="mx-auto mt-3 max-w-md rounded-2xl bg-surface p-4 text-sm text-muted-foreground">
+            {payOnDeliveryText(order.deliveryMethod.provider)}
+          </p>
+        )}
       </div>
 
       <div className="mt-8 rounded-3xl border border-border p-5">
