@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CDEK_TARIFFS } from "@/lib/cdek-options";
+import { CDEK_PARCEL_CM, CDEK_TARIFFS } from "@/lib/cdek-options";
 
 // Виджет СДЭК (карта ПВЗ + расчёт стоимости). Скрипт грузится с CDN,
 // бэкенд-запросы идут через наш прокси /api/cdek (ключи СДЭК не попадают на клиент).
@@ -79,9 +79,12 @@ function loadWidgetScript(): Promise<void> {
 
 export function CdekWidget({
   weightGrams,
+  declaredValueRub,
   onSelect,
 }: {
   weightGrams: number;
+  /** Стоимость корзины, руб — чтобы карта показала доставку со страховкой СДЭК */
+  declaredValueRub: number;
   onSelect: (sel: CdekSelection | null) => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -95,7 +98,9 @@ export function CdekWidget({
 
   const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
   const fromCity = process.env.NEXT_PUBLIC_CDEK_FROM_CITY ?? "Москва";
-  const weightKg = Math.max(0.1, Math.round(weightGrams) / 1000);
+  // Виджет и API СДЭК ждут вес в граммах (в килограммах СДЭК посчитал бы минимальный вес).
+  const parcelWeight = Math.max(1, Math.round(weightGrams));
+  const declared = Math.max(0, Math.round(declaredValueRub));
 
   useEffect(() => {
     if (!apiKey) return; // без ключа карт виджет не построить — покажем сообщение ниже
@@ -109,13 +114,13 @@ export function CdekWidget({
         instanceRef.current = new window.CDEKWidget({
           root: rootRef.current.id,
           apiKey,
-          servicePath: "/api/cdek",
+          servicePath: `/api/cdek?declared=${declared}`,
           from: fromCity,
           defaultLocation: fromCity,
           lang: "rus",
           currency: "RUB",
           tariffs: CDEK_TARIFFS,
-          goods: [{ width: 20, height: 10, length: 20, weight: weightKg }],
+          goods: [{ ...CDEK_PARCEL_CM, weight: parcelWeight }],
           onChoose(mode: "office" | "door", tariff: CdekTariff, point: CdekPoint) {
             const cityCode =
               point?.city_code ?? point?.location?.city_code ?? null;
@@ -154,8 +159,8 @@ export function CdekWidget({
       }
       instanceRef.current = null;
     };
-    // Пересоздаём виджет при изменении веса корзины
-  }, [apiKey, fromCity, retryKey, weightKg]);
+    // Пересоздаём виджет при изменении веса или стоимости корзины
+  }, [apiKey, fromCity, retryKey, parcelWeight, declared]);
 
   if (!apiKey) {
     return (

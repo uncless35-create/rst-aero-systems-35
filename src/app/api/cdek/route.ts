@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { cdekFetch } from "@/lib/cdek";
+import { calculateTariffTotal, cdekFetch } from "@/lib/cdek";
+import { CDEK_TARIFFS } from "@/lib/cdek-options";
 import { consumeRateLimit } from "@/lib/rate-limit";
 
 // Бэкенд-«сервис» для виджета СДЭК. Виджет обращается сюда с ?action=offices|calculate,
@@ -49,6 +50,43 @@ const calculateSchema = z.object({
     .min(1)
     .max(20),
 });
+
+// Стоимость корзины, руб: виджет передаёт её в адресе сервиса (?declared=…), чтобы показать
+// цену доставки со страховкой. Сумма только для показа — при оформлении сервер считает сам.
+const declaredQuery = z.coerce.number().int().min(0).max(100_000_000);
+
+type WidgetTariff = { tariff_code: number; delivery_sum?: number };
+const ALLOWED_TARIFFS = new Set<number>([...CDEK_TARIFFS.office, ...CDEK_TARIFFS.door]);
+
+/**
+ * tarifflist отдаёт цену без страховки объявленной стоимости, а СДЭК берёт её с магазина.
+ * Подменяем цену наших тарифов на полную — ровно ту, что потом посчитает оформление заказа.
+ * Если пересчёт не удался, оставляем цену СДЭК как есть: итог всё равно пересчитает сервер.
+ */
+async function applyFullPrices(
+  tariffs: WidgetTariff[],
+  request: z.infer<typeof calculateSchema>,
+  declaredValueRub: number,
+) {
+  await Promise.all(
+    tariffs
+      .filter((tariff) => ALLOWED_TARIFFS.has(tariff.tariff_code))
+      .map(async (tariff) => {
+        try {
+          const full = await calculateTariffTotal({
+            tariffCode: tariff.tariff_code,
+            from: request.from_location,
+            to: request.to_location,
+            packages: request.packages,
+            declaredValueRub,
+          });
+          tariff.delivery_sum = full.deliverySumKopecks / 100;
+        } catch (e) {
+          console.error(`СДЭК: полная цена тарифа ${tariff.tariff_code}:`, e);
+        }
+      }),
+  );
+}
 
 function clientKey(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -137,7 +175,11 @@ export async function POST(req: NextRequest) {
       method: "POST",
       json: parsed.data,
     });
-    const data = await res.json();
+    const data = (await res.json()) as { tariff_codes?: WidgetTariff[] };
+    const declared = declaredQuery.safeParse(searchParams.get("declared") ?? undefined);
+    if (res.ok && declared.success && declared.data > 0 && Array.isArray(data.tariff_codes)) {
+      await applyFullPrices(data.tariff_codes, parsed.data, declared.data);
+    }
     return NextResponse.json(data, { status: res.status });
   } catch (e) {
     console.error("СДЭК calculate:", e);

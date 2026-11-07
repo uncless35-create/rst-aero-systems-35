@@ -233,7 +233,11 @@ export function CheckoutForm({
           {/* СДЭК: карта пунктов выдачи с авторасчётом стоимости */}
           {isCdek && (
             <div className="space-y-3">
-              <CdekWidget weightGrams={cartWeightGrams} onSelect={setCdek} />
+              <CdekWidget
+                weightGrams={cartWeightGrams}
+                declaredValueRub={itemsTotal / 100}
+                onSelect={setCdek}
+              />
               {cdek ? (
                 <div className="rounded-2xl border border-primary bg-surface p-4 text-sm">
                   <p className="font-medium">

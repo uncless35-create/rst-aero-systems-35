@@ -8,6 +8,8 @@
 //   CDEK_PASSWORD=<боевой пароль интеграции>
 //   CDEK_FROM_CITY_CODE=<код города отправки СДЭК>
 
+import { CDEK_PARCEL_CM } from "@/lib/cdek-options";
+
 const API_URL = process.env.CDEK_API_URL?.replace(/\/$/, "") ?? "https://api.edu.cdek.ru/v2";
 // Публичные тестовые ключи СДЭК (работают только на api.edu.cdek.ru)
 const ACCOUNT = process.env.CDEK_ACCOUNT ?? "EMscd6r9JnFiQ3bLoyjJY6eM78JrJceI";
@@ -131,6 +133,53 @@ export async function getCdekDeliveryPoint(code: string): Promise<CdekDeliveryPo
   };
 }
 
+type CdekLocation = Record<string, unknown>;
+type CdekPackage = { weight: number; length?: number; width?: number; height?: number };
+
+/**
+ * Сколько СДЭК выставит магазину за посылку по тарифу: `total_sum` — доставка с НДС
+ * плюс страховка объявленной стоимости (СДЭК берёт её всегда, когда в накладной есть
+ * стоимость товара). `delivery_sum` из calculator/tariff — без НДС, брать его нельзя:
+ * с покупателя возьмём меньше, чем заплатим сами.
+ */
+export async function calculateTariffTotal(params: {
+  tariffCode: number;
+  from: CdekLocation;
+  to: CdekLocation;
+  packages: CdekPackage[];
+  declaredValueRub: number;
+}): Promise<CdekTariffResult> {
+  const declared = Math.round(params.declaredValueRub);
+  const res = await cdekFetch("calculator/tariff", {
+    method: "POST",
+    json: {
+      type: 1, // интернет-магазин
+      tariff_code: params.tariffCode,
+      from_location: params.from,
+      to_location: params.to,
+      packages: params.packages,
+      ...(declared > 0 ? { services: [{ code: "INSURANCE", parameter: String(declared) }] } : {}),
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`СДЭК: расчёт тарифа не удался (${res.status}) ${text}`);
+  }
+  const data = (await res.json()) as {
+    total_sum?: number;
+    period_min?: number;
+    period_max?: number;
+  };
+  if (typeof data.total_sum !== "number") {
+    throw new Error("СДЭК: в ответе нет стоимости доставки");
+  }
+  return {
+    deliverySumKopecks: Math.round(data.total_sum * 100),
+    periodMin: data.period_min ?? null,
+    periodMax: data.period_max ?? null,
+  };
+}
+
 /**
  * Серверный расчёт стоимости доставки по конкретному тарифу.
  * Используется при создании заказа — данным клиента о цене не доверяем.
@@ -139,35 +188,17 @@ export async function calculateTariff(params: {
   tariffCode: number;
   toCityCode: number;
   weightGrams: number;
+  /** Стоимость товаров, руб — объявленная стоимость для страховки СДЭК */
+  declaredValueRub: number;
   fromCityCode?: number;
 }): Promise<CdekTariffResult> {
-  const res = await cdekFetch("calculator/tariff", {
-    method: "POST",
-    json: {
-      type: 1, // интернет-магазин
-      tariff_code: params.tariffCode,
-      from_location: { code: params.fromCityCode ?? CDEK_FROM_CITY_CODE },
-      to_location: { code: params.toCityCode },
-      packages: [{ weight: Math.max(1, Math.round(params.weightGrams)) }],
-    },
+  return calculateTariffTotal({
+    tariffCode: params.tariffCode,
+    from: { code: params.fromCityCode ?? CDEK_FROM_CITY_CODE },
+    to: { code: params.toCityCode },
+    packages: [{ weight: Math.max(1, Math.round(params.weightGrams)), ...CDEK_PARCEL_CM }],
+    declaredValueRub: params.declaredValueRub,
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`СДЭК: расчёт тарифа не удался (${res.status}) ${text}`);
-  }
-  const data = (await res.json()) as {
-    delivery_sum?: number;
-    period_min?: number;
-    period_max?: number;
-  };
-  if (typeof data.delivery_sum !== "number") {
-    throw new Error("СДЭК: в ответе нет стоимости доставки");
-  }
-  return {
-    deliverySumKopecks: Math.round(data.delivery_sum * 100),
-    periodMin: data.period_min ?? null,
-    periodMax: data.period_max ?? null,
-  };
 }
 
 export type CdekShipmentItem = {

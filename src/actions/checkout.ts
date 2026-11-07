@@ -155,6 +155,7 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
         tariffCode: data.cdek.tariffCode,
         toCityCode,
         weightGrams: totalWeightGrams,
+        declaredValueRub: itemsTotalKopecks / 100,
       });
       deliveryPriceKopecks = tariff.deliverySumKopecks;
     } catch (e) {
