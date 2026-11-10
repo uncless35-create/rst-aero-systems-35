@@ -9,6 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Price } from "@/components/storefront/price";
 import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
+import { trackGoal } from "@/lib/analytics";
 
 export type PurchaseVariant = {
   id: string;
@@ -77,6 +78,7 @@ export function ProductPurchasePanel({ product }: { product: PurchaseProduct }) 
       weightGrams: product.weightGrams,
       quantity: qty,
     });
+    trackGoal("add_to_cart");
     setAdded(true);
     toast.success("Добавлено в корзину");
     setTimeout(() => setAdded(false), 1500);

@@ -1,5 +1,7 @@
 "use client";
 
+import { trackGoal } from "@/lib/analytics";
+
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -146,6 +148,7 @@ export function ManagerChat() {
       if (!response.ok || !data.conversationToken || !data.message) {
         throw new Error(data.error || "Не удалось отправить сообщение");
       }
+      trackGoal("chat_message");
 
       window.localStorage.setItem(TOKEN_KEY, data.conversationToken);
       window.localStorage.setItem(PROFILE_KEY, JSON.stringify({ name, contact }));

@@ -1,26 +1,34 @@
+"use client";
+
+import { useEffect } from "react";
 import Script from "next/script";
+import { usePathname, useSearchParams } from "next/navigation";
+import { trackGoal, trackPageView } from "@/lib/analytics";
 
-// Яндекс.Метрика. Включается переменной NEXT_PUBLIC_YANDEX_METRICA_ID (номер счётчика).
-// Без неё ничего не рендерится.
 export function YandexMetrica() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
   const id = process.env.NEXT_PUBLIC_YANDEX_METRICA_ID;
-  if (!id || !/^\d+$/.test(id)) return null;
 
-  return (
-    <>
-      <Script id="yandex-metrica" strategy="afterInteractive">
-        {`(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");ym(${id},"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});`}
-      </Script>
-      <noscript>
-        <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`https://mc.yandex.ru/watch/${id}`}
-            style={{ position: "absolute", left: "-9999px" }}
-            alt=""
-          />
-        </div>
-      </noscript>
-    </>
-  );
+  useEffect(() => {
+    const sent = trackPageView(window.location.href, document.referrer);
+    if (sent && pathname === "/checkout") trackGoal("checkout_start");
+  }, [pathname, query]);
+
+  useEffect(() => {
+    function onClick(event: MouseEvent) {
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest("a");
+      if (!link) return;
+      if (link.protocol === "mailto:") trackGoal("contact_email");
+      else if (link.protocol === "tel:") trackGoal("contact_phone");
+      else if (["t.me", "telegram.me"].includes(link.hostname)) trackGoal("contact_telegram");
+    }
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
+
+  if (!id || !/^\d+$/.test(id)) return null;
+  return <Script id="yandex-metrica-tag" src="https://mc.yandex.ru/metrika/tag.js" strategy="afterInteractive" />;
 }

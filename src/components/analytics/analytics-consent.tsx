@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { YandexMetrica } from "@/components/analytics/yandex-metrica";
 import { PRIVACY_POLICY_VERSION } from "@/lib/privacy";
-
-const STORAGE_KEY = "rst-analytics-consent";
+import { ANALYTICS_CONSENT_KEY } from "@/lib/analytics";
 
 type Consent = "loading" | "pending" | "accepted" | "declined";
 
@@ -15,7 +14,10 @@ export function AnalyticsConsent() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      let stored: string | null = null;
+      try {
+        stored = window.localStorage.getItem(ANALYTICS_CONSENT_KEY);
+      } catch { /* При недоступном хранилище аналитику не запускаем. */ }
       const [version, choice] = stored?.split(":") ?? [];
       setConsent(
         version === PRIVACY_POLICY_VERSION && (choice === "accepted" || choice === "declined")
@@ -27,13 +29,15 @@ export function AnalyticsConsent() {
   }, []);
 
   function choose(value: "accepted" | "declined") {
-    window.localStorage.setItem(STORAGE_KEY, `${PRIVACY_POLICY_VERSION}:${value}`);
+    try {
+      window.localStorage.setItem(ANALYTICS_CONSENT_KEY, `${PRIVACY_POLICY_VERSION}:${value}`);
+    } catch { /* Выбор не должен мешать работе магазина. */ }
     setConsent(value);
   }
 
   return (
     <>
-      {consent === "accepted" ? <YandexMetrica /> : null}
+      {consent === "accepted" ? <Suspense fallback={null}><YandexMetrica /></Suspense> : null}
       {consent === "pending" ? (
         <aside
           aria-label="Настройки аналитики"

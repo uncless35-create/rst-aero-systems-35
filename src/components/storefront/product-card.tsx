@@ -12,6 +12,7 @@ import { FavoriteButton } from "@/components/storefront/favorite-button";
 import { QuickView } from "@/components/storefront/quick-view";
 import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
+import { trackGoal } from "@/lib/analytics";
 import type { ProductCardData } from "@/lib/types";
 
 export function ProductCard({ product, index = 0 }: { product: ProductCardData; index?: number }) {
@@ -45,6 +46,7 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
       weightGrams: product.weightGrams,
       quantity: 1,
     });
+    trackGoal("add_to_cart");
     setAdded(true);
     toast.success("Добавлено в корзину");
     setTimeout(() => setAdded(false), 1500);

@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/storefront/site-header";
 import { BottomNav } from "@/components/storefront/bottom-nav";
 import { Footer } from "@/components/storefront/footer";
 import { ManagerChat } from "@/components/storefront/manager-chat";
+import { AnalyticsConsent } from "@/components/analytics/analytics-consent";
 
 export default function StorefrontLayout({
   children,
@@ -15,6 +16,7 @@ export default function StorefrontLayout({
       <Footer />
       <BottomNav />
       <ManagerChat />
+      <AnalyticsConsent />
     </div>
   );
 }

@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true, updatedAt: true },
     }),
     prisma.product.findMany({
-      where: { isActive: true },
+      where: { isActive: true, category: { isVisible: true } },
       select: { slug: true, updatedAt: true },
     }),
   ]);
@@ -24,13 +24,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/about", priority: 0.4 },
     { path: "/delivery-payment", priority: 0.5 },
     { path: "/contacts", priority: 0.4 },
+    { path: "/warranty", priority: 0.4 },
     { path: "/privacy", priority: 0.2 },
   ];
 
   return [
     ...staticPaths.map((p) => ({
       url: `${BASE}${p.path}`,
-      lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: p.priority,
     })),

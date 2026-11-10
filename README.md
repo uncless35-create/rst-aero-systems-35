@@ -1,4 +1,7 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+RST AERO SYSTEMS — интернет-магазин FPV-техники на Next.js.
+
+Аудит источников посетителей, подключение Метрики и план продвижения:
+[docs/traffic-and-promotion.md](docs/traffic-and-promotion.md).
 
 ## Getting Started
 

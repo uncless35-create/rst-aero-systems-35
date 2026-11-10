@@ -7,7 +7,11 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent("about");
-  return { title: content?.title ?? "О компании" };
+  return {
+    title: content?.title ?? "О компании",
+    description: "О магазине RST AERO SYSTEMS: FPV-дроны, тинивупы, аппаратура и комплектующие. Помощь с подбором и доставка по России.",
+    alternates: { canonical: "/about" },
+  };
 }
 
 export default async function AboutPage() {

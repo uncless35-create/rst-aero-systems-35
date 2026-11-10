@@ -7,7 +7,11 @@ export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getSiteContent("delivery-payment");
-  return { title: content?.title ?? "Доставка и оплата" };
+  return {
+    title: content?.title ?? "Доставка и оплата",
+    description: "Доставка заказов RST AERO SYSTEMS по России через СДЭК и самовывоз в Новороссийске. Условия получения и оплаты FPV-техники.",
+    alternates: { canonical: "/delivery-payment" },
+  };
 }
 
 export default async function DeliveryPaymentPage() {

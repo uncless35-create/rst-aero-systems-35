@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Гарантия и возврат",
+  alternates: { canonical: "/warranty" },
   description:
     "Условия гарантии и возврата RST AERO SYSTEMS: гарантийные сроки на FPV-технику, что покрывает гарантия, возврат товара надлежащего качества и порядок обращения.",
 };

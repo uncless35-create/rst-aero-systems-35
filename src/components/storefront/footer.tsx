@@ -29,8 +29,8 @@ export function Footer() {
         </div>
         <div className="space-y-2 text-sm">
           <p className="font-medium">Контакты</p>
-          <p className="text-muted-foreground">{SITE.phone}</p>
-          <p className="text-muted-foreground">{SITE.email}</p>
+          <a href={`tel:${SITE.phone.replace(/[^+\d]/g, "")}`} className="block text-muted-foreground hover:text-foreground">{SITE.phone}</a>
+          <a href={`mailto:${SITE.email}`} className="block text-muted-foreground hover:text-foreground">{SITE.email}</a>
           {telegramUrl ? (
             <a
               href={telegramUrl}
