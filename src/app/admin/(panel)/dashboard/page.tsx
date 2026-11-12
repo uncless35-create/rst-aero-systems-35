@@ -1,16 +1,24 @@
 import Link from "next/link";
-import { AlertTriangle, Boxes, Building2, CreditCard, MessageCircle, Package, SearchCheck, ShoppingCart } from "lucide-react";
+import { AlertTriangle, Boxes, Building2, Compass, CreditCard, MessageCircle, Package, SearchCheck, ShoppingCart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/storefront/status-badge";
 import { formatRub } from "@/lib/money";
 import { isTbankConfigured } from "@/lib/tbank";
 import { isYookassaConfigured } from "@/lib/yookassa";
+import { trafficSourceName } from "@/lib/traffic-source";
+
+const SOURCES_PERIOD_DAYS = 90;
+
+function sourcesPeriodStart(): Date {
+  return new Date(Date.now() - SOURCES_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+}
 
 export const metadata = { title: "Дашборд" };
 
 export default async function AdminDashboard() {
   const onlinePaymentConfigured = isTbankConfigured() || isYookassaConfigured();
-  const [productsCount, categoriesCount, newOrders, stockProducts, recentOrders, reviewProducts, openChats, possiblePlaceholderStock, contactsContent] =
+  const sourcesSince = sourcesPeriodStart();
+  const [productsCount, categoriesCount, newOrders, stockProducts, recentOrders, reviewProducts, openChats, possiblePlaceholderStock, contactsContent, sourceGroups] =
     await Promise.all([
       prisma.product.count(),
       prisma.category.count(),
@@ -42,7 +50,22 @@ export default async function AdminDashboard() {
         where: { key: "contacts" },
         select: { body: true },
       }),
+      prisma.order.groupBy({
+        by: ["trafficSource"],
+        where: { createdAt: { gte: sourcesSince }, status: { not: "CANCELLED" } },
+        _count: { _all: true },
+        _sum: { totalKopecks: true },
+      }),
     ]);
+  const orderSources = sourceGroups
+    .map((g) => ({
+      key: g.trafficSource ?? "unknown",
+      label: g.trafficSource ? trafficSourceName(g.trafficSource) : "Не записан",
+      count: g._count._all,
+      totalKopecks: g._sum.totalKopecks ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count || b.totalKopecks - a.totalKopecks);
+  const maxSourceCount = Math.max(1, ...orderSources.map((s) => s.count));
   const sellerRequisitesMissing = !contactsContent?.body.match(/\bИНН\b/i);
 
   const lowStock = stockProducts
@@ -170,6 +193,40 @@ export default async function AdminDashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Источники заказов */}
+      <div className="rounded-3xl bg-background p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Compass className="size-5 text-muted-foreground" />
+          <h2 className="font-semibold">Откуда заказы</h2>
+          <span className="text-sm text-muted-foreground">· {SOURCES_PERIOD_DAYS} дней, без отменённых</span>
+        </div>
+        {orderSources.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Заказов за период нет</p>
+        ) : (
+          <div className="space-y-3">
+            {orderSources.map((s) => (
+              <div key={s.key} className="text-sm">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-medium">{s.label}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {s.count} шт · {formatRub(s.totalKopecks)}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface">
+                  <div
+                    className={s.key === "unknown" ? "h-full rounded-full bg-muted-foreground/30" : "h-full rounded-full bg-foreground"}
+                    style={{ width: `${(s.count / maxSourceCount) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="mt-4 text-xs text-muted-foreground">
+          Источник — последний переход из поиска, ChatGPT, по ссылке или рекламе за 30 дней до заказа. Прямой заход его не затирает.
+        </p>
       </div>
     </div>
   );

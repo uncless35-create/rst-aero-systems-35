@@ -10,6 +10,7 @@ import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
 import { normalizeRuPhone } from "@/lib/phone";
 import { describeCdekStatus } from "@/lib/cdek-status";
+import { parseTrafficInfo, trafficSourceLabel } from "@/lib/traffic-source";
 
 export const metadata = { title: "Заказ" };
 
@@ -34,6 +35,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
         select: { id: true, lastMessageAt: true },
       })
     : [];
+  const traffic = parseTrafficInfo(order.trafficInfo);
   const contactLink =
     "inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-2";
 
@@ -66,6 +68,19 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
             {order.customerEmail && <p>{order.customerEmail}</p>}
             {order.user && <p className="text-xs">Аккаунт: {order.user.email}</p>}
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Источник:</span>{" "}
+            {traffic ? (
+              <>
+                {trafficSourceLabel(traffic)}
+                {traffic.campaign ? ` · кампания «${traffic.campaign}»` : ""}
+                {traffic.landing ? ` · вход на ${traffic.landing}` : ""}
+                {traffic.at ? ` · ${new Date(traffic.at).toLocaleDateString("ru-RU")}` : ""}
+              </>
+            ) : (
+              "не записан (заказ до 12.11.2026 или cookie отключены)"
+            )}
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {phone && (
               <>

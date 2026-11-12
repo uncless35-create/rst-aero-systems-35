@@ -192,12 +192,15 @@ model Order {
   inventoryRestoredAt  DateTime? // остатки возвращены после отмены; маркер идемпотентности
   privacyAcceptedAt    DateTime?
   privacyPolicyVersion String?
+  trafficSource        String? // откуда пришёл покупатель: chatgpt|yandex|google|telegram|direct|other… (src/lib/traffic-source.ts)
+  trafficInfo          String? // JSON-строка: medium, campaign, referrer, landing, at
   items                OrderItem[]
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
   @@index([userId])
   @@index([status])
+  @@index([trafficSource])
 }
 
 model OrderItem {

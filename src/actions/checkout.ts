@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isYookassaConfigured, createPayment } from "@/lib/yookassa";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/order-inventory";
 import { PRIVACY_POLICY_VERSION } from "@/lib/privacy";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import { TRAFFIC_COOKIE, parseTrafficInfo, trafficSourceLabel } from "@/lib/traffic-source";
 
 export type CreateOrderResult =
   | { ok: true; orderNumber: number; accessToken: string; confirmationUrl?: string }
@@ -175,6 +176,9 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
+  // Откуда пришёл покупатель — cookie ставит proxy при заходе на сайт
+  const traffic = parseTrafficInfo((await cookies()).get(TRAFFIC_COOKIE)?.value);
+
   // Создание заказа + списание остатков в транзакции
   let order: { id: string; orderNumber: number; accessToken: string };
   try {
@@ -201,6 +205,8 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
           paymentStatus: "PENDING",
           privacyAcceptedAt: new Date(),
           privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+          trafficSource: traffic?.source ?? null,
+          trafficInfo: traffic ? JSON.stringify(traffic) : null,
           items: { create: orderItems },
         },
         select: { id: true, orderNumber: true, accessToken: true },
@@ -236,6 +242,7 @@ export async function createOrder(input: CheckoutInput): Promise<CreateOrderResu
     (deliveryAddress ? `\n📍 ${escapeHtml(deliveryAddress)}` : "") +
     ` — ${deliveryPriceKopecks === 0 ? "бесплатно" : formatRub(deliveryPriceKopecks)}\n` +
     `\n💰 <b>Итого: ${formatRub(totalKopecks)}</b>` +
+    `\n🧭 Источник: ${escapeHtml(trafficSourceLabel(traffic))}` +
     (data.comment ? `\n\n💬 ${escapeHtml(data.comment)}` : "");
   await sendTelegram(tgMessage);
 

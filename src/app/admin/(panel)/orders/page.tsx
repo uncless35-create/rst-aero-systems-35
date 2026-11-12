@@ -6,6 +6,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatusBadge } from "@/components/storefront/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
+import { trafficSourceName } from "@/lib/traffic-source";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_LABELS,
@@ -76,6 +77,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {o.customerName} · {o.customerPhone} · {new Date(o.createdAt).toLocaleDateString("ru-RU")}
+                    {o.trafficSource ? ` · ${trafficSourceName(o.trafficSource)}` : ""}
                   </p>
                 </div>
                 <div className="hidden text-right sm:block">
