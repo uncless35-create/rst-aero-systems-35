@@ -92,6 +92,15 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
 - **Гостевые заказы** не видны в «Моих заказах», пока их не привяжут: страница заказа `/order/<accessToken>/success`
   ведёт на `/register|login?order=<accessToken>`, после входа [claimGuestOrder](src/actions/orders.ts) ставит `userId`.
   Право на заказ — только секретный `accessToken`; по email/телефону не привязываем (email не подтверждается).
+- **Источник заказа** ([traffic-source.ts](src/lib/traffic-source.ts)). [proxy.ts](src/proxy.ts) при загрузке страницы кладёт
+  в httpOnly-cookie `rst_src` источник (UTM, `yclid`/`gclid`, реферер: ChatGPT, Яндекс, Google, Telegram…), 30 дней,
+  «последний значимый переход» — прямой заход не затирает. `createOrder` пишет его в `Order.trafficSource`/`trafficInfo`;
+  виден в карточке/списке заказов, в уведомлении Telegram и в блоке «Откуда заказы» на дашборде.
+- **Фиды и индексация.** `/products.xml` — YML для Яндекса (Вебмастер «Товары», Директ), `/google-feed.xml` — для
+  Google Merchant Center. Оба принимают `?utm_source=&utm_medium=&utm_campaign=` — метки уходят в ссылки товаров,
+  у каждой площадки свой адрес фида. Бренд (`vendor`) определяется по названию (`detectVendor`) — новый бренд
+  добавить в `VENDORS` [product-feed.ts](src/lib/product-feed.ts). **IndexNow** ([indexnow.ts](src/lib/indexnow.ts),
+  ключ-файл в `public/`) шлёт Bing (кормит поиск ChatGPT) и Яндексу карточку при сохранении в админке; весь сайт — `pnpm indexnow` на сервере.
 - **Prisma singleton** — [src/lib/prisma.ts](src/lib/prisma.ts).
 - **Хранилища клиента** — [src/stores/](src/stores/); чтобы не рассинхронить SSR, компоненты со счётчиками
   используют [useHydrated()](src/lib/use-hydrated.ts).
