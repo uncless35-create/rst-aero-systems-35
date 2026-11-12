@@ -17,7 +17,8 @@
     "content:check": "tsx scripts/sync-product-content.ts",
     "content:apply": "tsx scripts/sync-product-content.ts --apply",
     "telegram:webhook": "tsx scripts/configure-telegram-webhook.ts",
-    "cdek:webhook": "tsx scripts/configure-cdek-webhook.ts"
+    "cdek:webhook": "tsx scripts/configure-cdek-webhook.ts",
+    "indexnow": "tsx scripts/indexnow-submit.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

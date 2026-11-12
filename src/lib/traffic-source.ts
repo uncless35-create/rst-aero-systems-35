@@ -160,8 +160,9 @@ export function detectTrafficSource(
   return null;
 }
 
+/** Next сам кодирует значение cookie, поэтому здесь — чистый JSON. */
 export function encodeTrafficInfo(info: TrafficInfo): string {
-  return encodeURIComponent(JSON.stringify(info));
+  return JSON.stringify(info);
 }
 
 /** Разбор cookie/JSON из БД. Мусор и подделки → null. */

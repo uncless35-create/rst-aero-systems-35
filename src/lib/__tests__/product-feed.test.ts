@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProductFeed, detectVendor, feedLinkParams, type FeedProduct } from "@/lib/product-feed";
+import { buildGoogleFeed, buildProductFeed, detectVendor, feedLinkParams, type FeedProduct } from "@/lib/product-feed";
 
 const product: FeedProduct = {
   id: "product-1", slug: "fpv-drone", name: 'Дрон & "пульт"', summary: "<FPV>\u0000", description: null,
@@ -67,5 +67,20 @@ describe("товарный YML-фид", () => {
     expect(params).toEqual({ utm_source: "yandex", utm_medium: "products" });
     const feed = buildProductFeed([product], "https://rst-aero.ru", new Date(), params);
     expect(feed).toContain("<url>https://rst-aero.ru/product/fpv-drone?utm_source=yandex&amp;utm_medium=products</url>");
+  });
+
+  it("фид Google: цена со скидкой, наличие, бренд и метки", () => {
+    const feed = buildGoogleFeed(
+      [{ ...product, name: "Аппаратура RadioMaster Pocket (ELRS)", stockQty: 0 }],
+      "https://rst-aero.ru",
+      { utm_source: "google", utm_medium: "merchant" },
+    );
+    expect(feed).toContain('xmlns:g="http://base.google.com/ns/1.0"');
+    expect(feed).toContain("<g:price>1500.00 RUB</g:price>");
+    expect(feed).toContain("<g:sale_price>1234.56 RUB</g:sale_price>");
+    expect(feed).toContain("<g:availability>out_of_stock</g:availability>");
+    expect(feed).toContain("<g:brand>RadioMaster</g:brand>");
+    expect(feed).toContain("<g:link>https://rst-aero.ru/product/fpv-drone?utm_source=google&amp;utm_medium=merchant</g:link>");
+    expect(buildGoogleFeed([{ ...product, isActive: false }], "https://rst-aero.ru")).not.toContain("<item>");
   });
 });

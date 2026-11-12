@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { assertAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/slug";
 import { getListingContentIssues, productSchema, type ProductInput } from "@/lib/validation/product";
 import { parseAttributes, parseProductSources } from "@/lib/constants";
+import { submitToIndexNow } from "@/lib/indexnow";
 
 export type ProductActionResult =
   | { ok: true; id: string }
@@ -16,7 +18,11 @@ function revalidate(slug?: string) {
   revalidatePath("/admin/products");
   revalidatePath("/catalog");
   revalidatePath("/");
-  if (slug) revalidatePath(`/product/${slug}`);
+  if (slug) {
+    revalidatePath(`/product/${slug}`);
+    // Bing/ChatGPT и Яндекс переобойдут карточку сразу, а не через дни
+    after(() => submitToIndexNow([`/product/${slug}`]));
+  }
 }
 
 async function resolveSlug(name: string, provided: string | undefined, excludeId?: string) {
