@@ -1,4 +1,4 @@
-import { official, type ProductContentRecord } from "./types";
+import { avitoListing, official, type ProductContentRecord } from "./types";
 
 export const radioVideoContent: ProductContentRecord[] = [
   {
@@ -18,6 +18,31 @@ export const radioVideoContent: ProductContentRecord[] = [
       { name: "Масса", value: "около 288 г без аккумуляторов" },
     ],
     sources: [official("RadioMaster — Pocket Radio Controller", "https://www.radiomasterrc.com/products/pocket-radio-controller-m2")],
+    status: "VERIFIED",
+  },
+  {
+    slug: "apparatura-radiomaster-boxer-elrs",
+    name: "Аппаратура RadioMaster Boxer (ELRS)",
+    summary: "Пульт среднего размера на EdgeTX: полноразмерные стики на датчиках Холла, встроенный ExpressLRS 2.4 ГГц и отсек под внешний модуль.",
+    exactVariant: "RadioMaster Boxer M2, встроенный ELRS 2.4 ГГц (FCC)",
+    description: "RadioMaster Boxer — компромисс между карманным Pocket и большим TX16S: корпус компактный, а стики полноразмерные, на датчиках Холла, поэтому управлять точно и удобно. Прошивка EdgeTX поддерживает модели, микшеры и телеметрию, встроенный модуль ExpressLRS 2.4 ГГц с вентилятором охлаждения работает с частотой обновления до 1000 Гц, а сзади есть стандартный отсек JR под внешний модуль — например, Crossfire. В батарейный отсек помещается 2S LiPo до 6200 мА·ч, SD-карта уже установлена. Пульт новый, в упаковке и в плёнке.",
+    compatibility: "Работает с приёмниками ExpressLRS 2.4 ГГц при совместимой версии прошивки. Питание — два аккумулятора 18650 (лоток в комплекте) или 2S LiPo; аккумуляторы не входят, пару Litokala 18650 можно взять у нас. Не уверены, подойдёт ли к вашему дрону — напишите модель, подскажем до заказа.",
+    packageContents: "Аппаратура RadioMaster Boxer, фирменный чехол, T-антенна, кабель USB-C, защита стиков, шестигранный ключ 1,5 мм, 2 винта M4×4, 4 мягкие пружины для стиков, лоток под 18650, наклейки, инструкция. Аккумуляторы не входят.",
+    attributes: [
+      { name: "Прошивка", value: "EdgeTX" },
+      { name: "ВЧ-модуль", value: "ExpressLRS 2.4 ГГц, до 1000 Гц, с вентилятором охлаждения" },
+      { name: "Стики", value: "полноразмерные, на датчиках Холла" },
+      { name: "Каналы", value: "до 16 (зависит от приёмника)" },
+      { name: "Экран", value: "монохромный ЖК 128×64" },
+      { name: "Внешний модуль", value: "стандартный отсек JR" },
+      { name: "Питание", value: "2×18650 или 2S LiPo, 6,6–8,4 В, не входят" },
+      { name: "Процессор", value: "STM32, 1 МБ Flash" },
+      { name: "Размер и масса", value: "235×178×77 мм, 532,5 г" },
+    ],
+    sources: [
+      official("RadioMaster — Boxer Radio Controller (M2)", "https://radiomasterrc.com/products/boxer-radio-controller-m2"),
+      avitoListing("/novorossiysk/sport_i_otdyh/pult_radiomaster_boxer_elrs_2.4_dlya_fpv_drona_7264479612"),
+    ],
     status: "VERIFIED",
   },
   {
