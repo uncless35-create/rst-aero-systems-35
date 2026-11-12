@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildProductFeed, type FeedProduct } from "@/lib/product-feed";
+import { buildProductFeed, detectVendor, feedLinkParams, type FeedProduct } from "@/lib/product-feed";
 
 const product: FeedProduct = {
   id: "product-1", slug: "fpv-drone", name: 'Дрон & "пульт"', summary: "<FPV>\u0000", description: null,
@@ -47,5 +47,25 @@ describe("товарный YML-фид", () => {
   it("уважает принудительную отметку отсутствия товара", () => {
     expect(buildProductFeed([{ ...product, outOfStock: true }], "https://rst-aero.ru"))
       .toContain('<offer id="product-1" available="false">');
+  });
+
+  it("ставит бренд по названию, а в сборных комплектах — нет", () => {
+    expect(detectVendor("Тинивуп BetaFPV Air65 II (Racing)")).toBe("BETAFPV");
+    expect(detectVendor("Cinewhoop BETAFPV Pavo20 Pro (O4 Pro PNP, ELRS)")).toBe("BETAFPV");
+    expect(detectVendor("FPV-дрон GEPRC Vapor X5 (DJI O4 Pro, ELRS)")).toBe("GEPRC");
+    expect(detectVendor("FPV-дрон GEPRC Vapor X5 (аналог, ELRS)")).toBe("GEPRC");
+    expect(detectVendor("Тинивуп HappyModel Mobula7 1S (ELRS)")).toBe("HappyModel");
+    expect(detectVendor("Аппаратура RadioMaster Pocket (ELRS)")).toBe("RadioMaster");
+    expect(detectVendor("FPV-комплект «Цифра DJI O4» под ключ: Meteor75 Pro O4, Pocket и Goggles N3")).toBeNull();
+    expect(detectVendor("Готовый FPV-комплект для новичка: дрон, очки, пульт")).toBeNull();
+    const feed = buildProductFeed([{ ...product, name: "Стек SpeedyBee F405 V4 (60A)" }], "https://rst-aero.ru");
+    expect(feed).toContain("<vendor>SpeedyBee</vendor>");
+  });
+
+  it("добавляет к ссылкам UTM-метки площадки и отбрасывает мусор", () => {
+    const params = feedLinkParams(new URLSearchParams("utm_source=yandex&utm_medium=products&utm_campaign=<x>&foo=1"));
+    expect(params).toEqual({ utm_source: "yandex", utm_medium: "products" });
+    const feed = buildProductFeed([product], "https://rst-aero.ru", new Date(), params);
+    expect(feed).toContain("<url>https://rst-aero.ru/product/fpv-drone?utm_source=yandex&amp;utm_medium=products</url>");
   });
 });
