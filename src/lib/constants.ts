@@ -5,6 +5,7 @@ export const ORDER_STATUSES = [
   "PAID",
   "PROCESSING",
   "SHIPPED",
+  "READY_FOR_PICKUP",
   "COMPLETED",
   "CANCELLED",
 ] as const;
@@ -15,6 +16,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PAID: "Оплачен",
   PROCESSING: "В обработке",
   SHIPPED: "Отправлен",
+  READY_FOR_PICKUP: "В пункте выдачи",
   COMPLETED: "Завершён",
   CANCELLED: "Отменён",
 };
@@ -24,6 +26,7 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   PAID: "bg-success/10 text-success",
   PROCESSING: "bg-accent text-accent-foreground",
   SHIPPED: "bg-primary text-primary-foreground",
+  READY_FOR_PICKUP: "bg-accent text-accent-foreground",
   COMPLETED: "bg-success/10 text-success",
   CANCELLED: "bg-destructive/10 text-destructive",
 };

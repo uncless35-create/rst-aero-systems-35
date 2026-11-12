@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
 import { normalizeRuPhone } from "@/lib/phone";
+import { describeCdekStatus } from "@/lib/cdek-status";
 
 export const metadata = { title: "Заказ" };
 
@@ -51,7 +52,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
           <Badge variant={order.paymentStatus === "SUCCEEDED" ? "success" : "muted"}>
             Оплата: {PAYMENT_STATUS_LABELS[order.paymentStatus as PaymentStatus]}
           </Badge>
-          <OrderStatusSelect orderId={order.id} status={order.status} />
+          <OrderStatusSelect key={order.status} orderId={order.id} status={order.status} />
         </div>
       </div>
 
@@ -147,6 +148,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Params 
           orderId={order.id}
           uuid={order.cdekOrderUuid}
           trackNumber={order.cdekTrackNumber}
+          cdekStatus={describeCdekStatus(order)}
           cashOnDeliveryKopecks={order.paymentStatus === "SUCCEEDED" ? 0 : order.totalKopecks}
         />
       )}

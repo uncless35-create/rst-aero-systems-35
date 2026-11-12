@@ -1,29 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Truck } from "lucide-react";
+import { Loader2, RefreshCw, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatRub } from "@/lib/money";
-import {
-  createShipmentForOrder,
-  refreshShipmentNumber,
-} from "@/actions/admin/cdek-shipment";
+import { createShipmentForOrder, syncShipmentFromCdek } from "@/actions/admin/cdek-shipment";
 
 export function CdekShipmentPanel({
   orderId,
-  uuid: initialUuid,
-  trackNumber: initialTrack,
+  uuid,
+  trackNumber,
+  cdekStatus,
   cashOnDeliveryKopecks,
 }: {
   orderId: string;
   uuid: string | null;
   trackNumber: string | null;
+  /** Последний статус отправления в СДЭК, уже подписанный (describeCdekStatus) */
+  cdekStatus: string | null;
   /** Сколько СДЭК возьмёт с покупателя при получении; 0 — заказ оплачен заранее */
   cashOnDeliveryKopecks: number;
 }) {
-  const [uuid, setUuid] = useState(initialUuid);
-  const [track, setTrack] = useState(initialTrack);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function create() {
@@ -31,21 +31,20 @@ export function CdekShipmentPanel({
     const r = await createShipmentForOrder(orderId);
     setLoading(false);
     if (r.ok) {
-      setUuid(r.uuid);
-      setTrack(r.trackNumber);
       toast.success("Отправление СДЭК создано");
+      router.refresh();
     } else {
       toast.error(r.error);
     }
   }
 
-  async function refresh() {
+  async function sync() {
     setLoading(true);
-    const r = await refreshShipmentNumber(orderId);
+    const r = await syncShipmentFromCdek(orderId);
     setLoading(false);
     if (r.ok) {
-      setTrack(r.trackNumber);
-      toast.success(r.trackNumber ? "Номер накладной получен" : "Номер ещё готовится в СДЭК");
+      toast.success(r.cdekStatusName ? `СДЭК: ${r.cdekStatusName}` : "Данные СДЭК обновлены");
+      router.refresh();
     } else {
       toast.error(r.error);
     }
@@ -67,20 +66,26 @@ export function CdekShipmentPanel({
       </p>
       {uuid ? (
         <div className="space-y-2 text-muted-foreground">
-          {track ? (
+          {trackNumber ? (
             <p>
-              Накладная: <span className="font-semibold text-foreground">{track}</span>
+              Накладная: <span className="font-semibold text-foreground">{trackNumber}</span>
             </p>
           ) : (
             <p>Отправление создано, номер накладной готовится…</p>
           )}
+          <p>
+            Статус в СДЭК:{" "}
+            <span className="font-medium text-foreground">{cdekStatus ?? "ещё не получен"}</span>
+          </p>
+          <p className="text-xs">
+            Статус заказа меняется сам: «Отправлен» — когда посылку приняли в СДЭК, «В пункте выдачи», «Завершён» —
+            после вручения.
+          </p>
           <p className="break-all text-xs">UUID: {uuid}</p>
-          {!track && (
-            <Button size="sm" variant="surface" onClick={refresh} disabled={loading} className="gap-2">
-              {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-              Обновить номер
-            </Button>
-          )}
+          <Button size="sm" variant="surface" onClick={sync} disabled={loading} className="gap-2">
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+            Обновить из СДЭК
+          </Button>
         </div>
       ) : (
         <Button size="sm" onClick={create} disabled={loading} className="gap-2">

@@ -16,7 +16,8 @@
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",
     "content:check": "tsx scripts/sync-product-content.ts",
     "content:apply": "tsx scripts/sync-product-content.ts --apply",
-    "telegram:webhook": "tsx scripts/configure-telegram-webhook.ts"
+    "telegram:webhook": "tsx scripts/configure-telegram-webhook.ts",
+    "cdek:webhook": "tsx scripts/configure-cdek-webhook.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

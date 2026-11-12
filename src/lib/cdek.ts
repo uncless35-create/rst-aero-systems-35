@@ -8,6 +8,7 @@
 //   CDEK_PASSWORD=<боевой пароль интеграции>
 //   CDEK_FROM_CITY_CODE=<код города отправки СДЭК>
 
+import { createHash } from "node:crypto";
 import { CDEK_PARCEL_CM } from "@/lib/cdek-options";
 
 const API_URL = process.env.CDEK_API_URL?.replace(/\/$/, "") ?? "https://api.edu.cdek.ru/v2";
@@ -286,17 +287,64 @@ export async function createCdekShipment(params: {
   return { uuid };
 }
 
-/** Информация о заказе-отправлении СДЭК: номер накладной и статус. */
-export async function getCdekOrderInfo(
-  uuid: string,
-): Promise<{ cdekNumber: string | null; status: string | null }> {
-  const res = await cdekFetch(`orders/${uuid}`, { method: "GET" });
-  if (!res.ok) return { cdekNumber: null, status: null };
+/** Событие в истории отправления СДЭК. */
+export type CdekStatusEvent = {
+  code: string;
+  name: string;
+  /** ISO-время СДЭК, например 2026-11-10T16:46:07+0000 */
+  dateTime: string;
+  city: string | null;
+};
+
+/**
+ * Информация о заказе-отправлении СДЭК: номер накладной и история статусов.
+ * found=false — СДЭК не знает такой uuid (или запрос не удался): статус заказа не трогаем.
+ */
+export async function getCdekOrderInfo(uuid: string): Promise<{
+  found: boolean;
+  cdekNumber: string | null;
+  statuses: CdekStatusEvent[];
+}> {
+  const res = await cdekFetch(`orders/${encodeURIComponent(uuid)}`, { method: "GET" });
+  if (!res.ok) return { found: false, cdekNumber: null, statuses: [] };
   const data = (await res.json()) as {
-    entity?: { cdek_number?: string; statuses?: { name?: string }[] };
+    entity?: {
+      cdek_number?: string;
+      statuses?: { code?: string; name?: string; date_time?: string; city?: string }[];
+    };
   };
-  return {
-    cdekNumber: data.entity?.cdek_number ?? null,
-    status: data.entity?.statuses?.[0]?.name ?? null,
-  };
+  const statuses = (data.entity?.statuses ?? []).flatMap((s) =>
+    s.code && s.date_time
+      ? [{ code: s.code, name: s.name ?? s.code, dateTime: s.date_time, city: s.city ?? null }]
+      : [],
+  );
+  return { found: !!data.entity, cdekNumber: data.entity?.cdek_number ?? null, statuses };
+}
+
+/** Подписки СДЭК на события аккаунта (вебхуки). */
+export async function listCdekWebhooks(): Promise<{ uuid: string; type: string; url: string }[]> {
+  const res = await cdekFetch("webhooks", { method: "GET" });
+  if (!res.ok) throw new Error(`СДЭК: список вебхуков не получен (${res.status})`);
+  return (await res.json()) as { uuid: string; type: string; url: string }[];
+}
+
+export async function createCdekWebhook(type: string, url: string): Promise<void> {
+  const res = await cdekFetch("webhooks", { method: "POST", json: { type, url } });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`СДЭК: вебхук не создан (${res.status}) ${text}`);
+  }
+}
+
+export async function deleteCdekWebhook(uuid: string): Promise<void> {
+  const res = await cdekFetch(`webhooks/${encodeURIComponent(uuid)}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(`СДЭК: вебхук ${uuid} не удалён (${res.status})`);
+}
+
+/** Секрет в адресе вебхука СДЭК: СДЭК не подписывает запросы. Явный из env либо хеш пароля. */
+export function getCdekWebhookSecret(): string {
+  return (
+    process.env.CDEK_WEBHOOK_SECRET ||
+    createHash("sha256").update(`rst-aero-cdek-webhook:${ACCOUNT}:${PASSWORD}`).digest("hex")
+  );
 }

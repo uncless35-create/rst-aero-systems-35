@@ -20,6 +20,7 @@ import {
   type OrderStatus,
   type PaymentStatus,
 } from "@/lib/constants";
+import { describeCdekStatus } from "@/lib/cdek-status";
 
 export const metadata: Metadata = {
   title: "Заказ оформлен",
@@ -198,6 +199,11 @@ export default async function OrderSuccessPage({ params }: { params: Params }) {
             Номер накладной:{" "}
             <span className="font-semibold text-foreground">{order.cdekTrackNumber}</span>
           </p>
+          {describeCdekStatus(order) && (
+            <p className="mt-1 text-muted-foreground">
+              Сейчас: <span className="text-foreground">{describeCdekStatus(order)}</span>
+            </p>
+          )}
           <a
             href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(order.cdekTrackNumber)}`}
             target="_blank"

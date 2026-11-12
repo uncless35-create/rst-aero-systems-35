@@ -9,6 +9,7 @@ import {
   isCdekShipmentConfigured,
   CDEK_DEFAULT_WEIGHT_GRAMS,
 } from "@/lib/cdek";
+import { syncCdekOrder } from "@/lib/cdek-sync";
 
 export type ShipmentResult =
   | { ok: true; uuid: string; trackNumber: string | null }
@@ -99,21 +100,18 @@ export async function createShipmentForOrder(orderId: string): Promise<ShipmentR
   }
 }
 
-/** Обновить номер накладной, если он ещё не пришёл. */
-export async function refreshShipmentNumber(orderId: string): Promise<ShipmentResult> {
+export type ShipmentSyncResult =
+  | { ok: true; trackNumber: string | null; status: string; cdekStatusName: string | null }
+  | { ok: false; error: string };
+
+/** Перечитать отправление в СДЭК: номер накладной, статус доставки и статус заказа. */
+export async function syncShipmentFromCdek(orderId: string): Promise<ShipmentSyncResult> {
   await assertAdmin();
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order?.cdekOrderUuid) return { ok: false, error: "Отправление не создано" };
   try {
-    const info = await getCdekOrderInfo(order.cdekOrderUuid);
-    if (info.cdekNumber && info.cdekNumber !== order.cdekTrackNumber) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { cdekTrackNumber: info.cdekNumber },
-      });
-    }
+    const r = await syncCdekOrder(orderId);
+    if (!r) return { ok: false, error: "СДЭК не нашёл отправление этого заказа" };
     revalidatePath(`/admin/orders/${orderId}`);
-    return { ok: true, uuid: order.cdekOrderUuid, trackNumber: info.cdekNumber };
+    return { ok: true, trackNumber: r.trackNumber, status: r.status, cdekStatusName: r.cdekStatusName };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Ошибка обновления" };
   }

@@ -12,6 +12,7 @@ import { formatRub } from "@/lib/money";
 import { PAYMENT_STATUS_LABELS, type PaymentStatus } from "@/lib/constants";
 import { customerCancelBlockReason } from "@/lib/order-cancel";
 import { payOnDeliveryText } from "@/lib/payment-copy";
+import { describeCdekStatus } from "@/lib/cdek-status";
 
 type Params = Promise<{ orderNumber: string }>;
 
@@ -104,6 +105,11 @@ export default async function AccountOrderDetailPage({ params }: { params: Param
             Номер накладной:{" "}
             <span className="font-semibold text-foreground">{order.cdekTrackNumber}</span>
           </p>
+          {describeCdekStatus(order) && (
+            <p className="mt-1 text-muted-foreground">
+              Сейчас: <span className="text-foreground">{describeCdekStatus(order)}</span>
+            </p>
+          )}
           <a
             href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(order.cdekTrackNumber)}`}
             target="_blank"

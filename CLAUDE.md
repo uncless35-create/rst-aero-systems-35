@@ -78,6 +78,13 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   плюс страховка `INSURANCE` на стоимость товаров ([calculateTariffTotal](src/lib/cdek.ts)). `delivery_sum`
   оттуда — без НДС, его не брать. Карта ([api/cdek](src/app/api/cdek/route.ts), `?declared=<руб>`) и пересчёт
   при оформлении считают одинаково: вес в граммах, коробка `CDEK_PARCEL_CM`.
+- **Статусы заказа двигает СДЭК** ([cdek-status.ts](src/lib/cdek-status.ts) — правила, [cdek-sync.ts](src/lib/cdek-sync.ts) — запись).
+  Посылку приняли в СДЭК и дальше по пути → `SHIPPED`, принята в ПВЗ/постамат → `READY_FOR_PICKUP` «В пункте выдачи»,
+  вручена → `COMPLETED` и при наложенном платеже `paymentStatus = SUCCEEDED`. Только вперёд, `CANCELLED` не трогаем;
+  возврат/«не вручён» статус не меняют, а шлют владельцу предупреждение в Telegram (ещё одно — при вручении).
+  Входы: вебхук СДЭК [api/webhooks/cdek](src/app/api/webhooks/cdek/route.ts) (секрет в `?secret=`, тело не доверяем —
+  перечитываем отправление по uuid) и опрос активных отправлений раз в 30 минут из [instrumentation.ts](src/instrumentation.ts)
+  (только `NODE_ENV=production`, выключить — `CDEK_STATUS_POLLING=off`). Последний статус СДЭК хранится в `Order.cdekStatus*`.
 - **Отмена заказа.** Покупатель отменяет сам из личного кабинета, пока заказ не в СДЭК и не оплачен онлайн
   ([order-cancel.ts](src/lib/order-cancel.ts)). Любая отмена (и покупателем, и в админке) возвращает товары
   на остаток через `restoreOrderInventory`. Остатки сверяются с Авито, поэтому старые и тестовые заказы
@@ -96,7 +103,7 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   `about`/`delivery-payment`/`contacts` (из `SiteContent`), `privacy`.
 - `src/app/admin/` — `login` (вне chrome) + `(panel)/*` (guard-layout + сайдбар): `dashboard`,
   `products` (+`new`, `[id]/edit`), `categories`, `delivery-methods`, `orders` (+`[id]`), `pages`.
-- `src/app/api/` — `auth/[...nextauth]`, `webhooks/yookassa`.
+- `src/app/api/` — `auth/[...nextauth]`, `webhooks/yookassa|tbank|telegram|cdek`, `cdek`, `chat/*`.
 
 ## Прод-сервер
 
@@ -121,7 +128,8 @@ Node установлен через **nvm** (`~/.nvm`). В неинтеракт
   на [pereezd.html](public/pereezd.html) (`rewrites` при `VERCEL=1` в [next.config.ts](next.config.ts)).
   Когда отвяжем домен от Vercel, удалить и заглушку, и rewrites.
 - Вебхуки ЮKassa и Telegram смотрят на `https://rst-aero.ru/api/webhooks/*`. После смены домена
-  или секрета выполнить `pnpm telegram:webhook` на сервере.
+  или секрета выполнить `pnpm telegram:webhook` на сервере. Вебхук СДЭК (`ORDER_STATUS` → `/api/webhooks/cdek`)
+  регистрирует `pnpm cdek:webhook` — повторить после смены домена или ключей СДЭК.
 
 ## Предпосылки вне кода
 
